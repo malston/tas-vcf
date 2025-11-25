@@ -1,0 +1,28 @@
+# Claude Code local settings
+.claude/settings.local.json
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!*.tfvars.example
+
+# Secrets
+**/secrets/
+*.pem
+*.key
+!*.key.example
+
+# OS files
+.DS_Store
+
+# Editor
+.idea/
+*.swp
+*.swo
+
+# Platform Automation state
+foundations/*/state/*.yml
+!foundations/*/state/.gitkeep
