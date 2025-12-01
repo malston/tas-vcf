@@ -1,0 +1,60 @@
+# foundations/vcf/vars/director.yml
+---
+# vCenter
+vcenter_host: vc01.vcf.lab
+vcenter_username: ((vcenter_username))
+vcenter_password: ((vcenter_password))
+vcenter_ca_cert: ""
+datacenter_name: VCF-DC
+cluster_name: VCF-Mgmt-Cluster
+datastore_name: vsan-ds
+
+# Ops Manager
+ops_manager_hostname: opsman.tas.vcf.lab
+ops_manager_private_ip: 10.0.1.10
+ops_manager_netmask: 255.255.255.0
+ops_manager_gateway: 10.0.1.1
+ops_manager_ssh_public_key: ((ops_manager_ssh_public_key))
+ops_manager_ssh_password: ((ops_manager_ssh_password))
+ops_manager_decryption_passphrase: ((ops_manager_decryption_passphrase))
+
+# Resource pools
+infrastructure_resource_pool: tas-infrastructure
+az1_resource_pool: tas-az1
+az2_resource_pool: tas-az2
+
+# Folders
+vm_folder: tas/vms
+template_folder: tas/templates
+disk_folder: tas/disks
+
+# NSX-T
+nsxt_host: nsx01.vcf.lab
+nsxt_username: ((nsxt_username))
+nsxt_password: ((nsxt_password))
+nsxt_ca_cert: ""
+
+# Networks - Infrastructure
+infrastructure_segment_name: tas-Infrastructure
+infrastructure_cidr: 10.0.1.0/24
+infrastructure_gateway: 10.0.1.1
+infrastructure_reserved_ips: 10.0.1.1-10.0.1.9
+
+# Networks - Deployment
+deployment_segment_name: tas-Deployment
+deployment_cidr: 10.0.2.0/24
+deployment_gateway: 10.0.2.1
+deployment_reserved_ips: 10.0.2.1-10.0.2.9
+
+# Networks - Services
+services_segment_name: tas-Services
+services_cidr: 10.0.3.0/24
+services_gateway: 10.0.3.1
+services_reserved_ips: 10.0.3.1-10.0.3.9
+
+# DNS and NTP
+dns_servers: 192.168.10.2
+ntp_servers: pool.ntp.org
+
+# Certificates
+trusted_certificates: ((trusted_certificates))
