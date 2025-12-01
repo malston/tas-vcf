@@ -1,0 +1,18 @@
+# terraform/vsphere/terraform.tfvars.example
+# Copy to terraform.tfvars and fill in values
+
+vcenter_host         = "vc01.vcf.lab"
+vcenter_username     = "administrator@vsphere.local"
+vcenter_password     = "CHANGE_ME"
+allow_unverified_ssl = true
+
+datacenter_name = "VCF-DC"
+cluster_name    = "VCF-Mgmt-Cluster"
+datastore_name  = "vsan-ds"
+
+environment_name = "tas"
+
+# Hosts for DRS rules
+infrastructure_host = "esx01.vcf.lab"
+az1_host            = "esx02.vcf.lab"
+az2_host            = "esx03.vcf.lab"
