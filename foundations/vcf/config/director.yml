@@ -1,0 +1,89 @@
+# foundations/vcf/config/director.yml
+---
+az-configuration:
+  - name: az1
+    clusters:
+      - cluster: ((cluster_name))
+        resource_pool: ((az1_resource_pool))
+        drs_rule: "SHOULD"
+  - name: az2
+    clusters:
+      - cluster: ((cluster_name))
+        resource_pool: ((az2_resource_pool))
+        drs_rule: "SHOULD"
+
+network-assignment:
+  network:
+    name: infrastructure
+  singleton_availability_zone:
+    name: az1
+
+networks-configuration:
+  icmp_checks_enabled: false
+  networks:
+    - name: infrastructure
+      subnets:
+        - iaas_identifier: ((infrastructure_segment_name))
+          cidr: ((infrastructure_cidr))
+          gateway: ((infrastructure_gateway))
+          reserved_ip_ranges: ((infrastructure_reserved_ips))
+          dns: ((dns_servers))
+          availability_zone_names:
+            - az1
+            - az2
+    - name: deployment
+      subnets:
+        - iaas_identifier: ((deployment_segment_name))
+          cidr: ((deployment_cidr))
+          gateway: ((deployment_gateway))
+          reserved_ip_ranges: ((deployment_reserved_ips))
+          dns: ((dns_servers))
+          availability_zone_names:
+            - az1
+            - az2
+    - name: services
+      subnets:
+        - iaas_identifier: ((services_segment_name))
+          cidr: ((services_cidr))
+          gateway: ((services_gateway))
+          reserved_ip_ranges: ((services_reserved_ips))
+          dns: ((dns_servers))
+          availability_zone_names:
+            - az1
+            - az2
+
+properties-configuration:
+  director_configuration:
+    ntp_servers_string: ((ntp_servers))
+    resurrector_enabled: true
+    post_deploy_enabled: true
+    retry_bosh_deploys: true
+  iaas_configuration:
+    vcenter_host: ((vcenter_host))
+    vcenter_username: ((vcenter_username))
+    vcenter_password: ((vcenter_password))
+    datacenter: ((datacenter_name))
+    disk_type: thin
+    ephemeral_datastores_string: ((datastore_name))
+    persistent_datastores_string: ((datastore_name))
+    bosh_vm_folder: ((vm_folder))
+    bosh_template_folder: ((template_folder))
+    bosh_disk_path: ((disk_folder))
+    ssl_verification_enabled: false
+    nsx_networking_enabled: true
+    nsx_mode: nsx-t
+    nsx_address: ((nsxt_host))
+    nsx_username: ((nsxt_username))
+    nsx_password: ((nsxt_password))
+    nsx_ca_certificate: ((nsxt_ca_cert))
+  security_configuration:
+    trusted_certificates: ((trusted_certificates))
+    generate_vm_passwords: true
+
+resource-configuration:
+  director:
+    internet_connected: false
+  compilation:
+    internet_connected: false
+
+vmextensions-configuration: []
