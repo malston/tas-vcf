@@ -15,6 +15,7 @@
 ### Task 1: Initialize Terraform Structure
 
 **Files:**
+
 - Create: `terraform/nsxt/versions.tf`
 - Create: `terraform/nsxt/provider.tf`
 - Create: `terraform/nsxt/variables.tf`
@@ -343,6 +344,7 @@ git commit -m "feat: add Terraform module structure with provider configs"
 ### Task 2: Create NSX-T Data Sources
 
 **Files:**
+
 - Create: `terraform/nsxt/data.tf`
 
 **Step 1: Create data sources file**
@@ -374,6 +376,7 @@ git commit -m "feat(nsxt): add data sources for edge cluster, transport zone, T0
 ### Task 3: Create T1 Gateways
 
 **Files:**
+
 - Create: `terraform/nsxt/t1_gateways.tf`
 
 **Step 1: Create T1 gateways**
@@ -448,6 +451,7 @@ git commit -m "feat(nsxt): add T1 gateways for infrastructure, deployment, servi
 ### Task 4: Create Segments
 
 **Files:**
+
 - Create: `terraform/nsxt/segments.tf`
 
 **Step 1: Create segments**
@@ -522,6 +526,7 @@ git commit -m "feat(nsxt): add segments for infrastructure, deployment, services
 ### Task 5: Create NAT Rules
 
 **Files:**
+
 - Create: `terraform/nsxt/nat.tf`
 
 **Step 1: Create NAT rules on T0**
@@ -594,6 +599,7 @@ git commit -m "feat(nsxt): add NAT rules for TAS egress and Ops Manager access"
 ### Task 6: Create IP Pools and Blocks
 
 **Files:**
+
 - Create: `terraform/nsxt/ip_pools.tf`
 
 **Step 1: Create IP pool and block for container networking**
@@ -649,6 +655,7 @@ git commit -m "feat(nsxt): add IP pool and block for container networking"
 ### Task 7: Create Load Balancer Components
 
 **Files:**
+
 - Create: `terraform/nsxt/load_balancer.tf`
 
 **Step 1: Create load balancer service, monitors, pools, and virtual servers**
@@ -862,6 +869,7 @@ git commit -m "feat(nsxt): add load balancer service, pools, monitors, virtual s
 ### Task 8: Create NSX-T Outputs
 
 **Files:**
+
 - Create: `terraform/nsxt/outputs.tf`
 
 **Step 1: Create outputs**
@@ -962,6 +970,7 @@ git commit -m "feat(nsxt): add outputs for segment names, pool names, VIPs"
 ### Task 9: Create NSX-T tfvars Example
 
 **Files:**
+
 - Create: `terraform/nsxt/terraform.tfvars.example`
 
 **Step 1: Create example tfvars**
@@ -1013,6 +1022,7 @@ git commit -m "docs(nsxt): add example tfvars file"
 ### Task 10: Create vSphere Data Sources
 
 **Files:**
+
 - Create: `terraform/vsphere/data.tf`
 
 **Step 1: Create data sources**
@@ -1062,6 +1072,7 @@ git commit -m "feat(vsphere): add data sources for datacenter, cluster, hosts"
 ### Task 11: Create Resource Pools
 
 **Files:**
+
 - Create: `terraform/vsphere/resource_pools.tf`
 
 **Step 1: Create resource pools**
@@ -1100,6 +1111,7 @@ git commit -m "feat(vsphere): add resource pools for infrastructure, az1, az2"
 ### Task 12: Create VM Folders
 
 **Files:**
+
 - Create: `terraform/vsphere/folders.tf`
 
 **Step 1: Create VM folders**
@@ -1141,6 +1153,7 @@ git commit -m "feat(vsphere): add VM folders for TAS"
 ### Task 13: Create DRS Rules
 
 **Files:**
+
 - Create: `terraform/vsphere/drs_rules.tf`
 
 **Step 1: Create DRS VM-Host affinity rules**
@@ -1222,6 +1235,7 @@ git commit -m "feat(vsphere): add DRS VM-Host affinity rules for AZ placement"
 ### Task 14: Create vSphere Outputs
 
 **Files:**
+
 - Create: `terraform/vsphere/outputs.tf`
 
 **Step 1: Create outputs**
@@ -1300,6 +1314,7 @@ git commit -m "feat(vsphere): add outputs for resource pools, folders, hosts"
 ### Task 15: Create vSphere tfvars Example
 
 **Files:**
+
 - Create: `terraform/vsphere/terraform.tfvars.example`
 
 **Step 1: Create example tfvars**
@@ -1339,6 +1354,7 @@ git commit -m "docs(vsphere): add example tfvars file"
 ### Task 16: Create Certificate Resources
 
 **Files:**
+
 - Create: `terraform/certs/main.tf`
 
 **Step 1: Create CA and certificates**
@@ -1522,6 +1538,7 @@ git commit -m "feat(certs): add CA and certificate generation"
 ### Task 17: Create Certificate Outputs
 
 **Files:**
+
 - Create: `terraform/certs/outputs.tf`
 
 **Step 1: Create outputs**
@@ -1591,6 +1608,7 @@ git commit -m "feat(certs): add certificate outputs"
 ### Task 18: Create Foundation Directory Structure
 
 **Files:**
+
 - Create: `foundations/vcf/config/.gitkeep`
 - Create: `foundations/vcf/vars/.gitkeep`
 - Create: `foundations/vcf/versions/.gitkeep`
@@ -1618,6 +1636,7 @@ git commit -m "feat(foundations): create vcf foundation directory structure"
 ### Task 19: Create Ops Manager Config
 
 **Files:**
+
 - Create: `foundations/vcf/config/opsman.yml`
 
 **Step 1: Create Ops Manager config**
@@ -1662,6 +1681,7 @@ git commit -m "feat(foundations): add Ops Manager deployment config"
 ### Task 20: Create Director Config
 
 **Files:**
+
 - Create: `foundations/vcf/config/director.yml`
 
 **Step 1: Create BOSH Director config**
@@ -1770,6 +1790,7 @@ git commit -m "feat(foundations): add BOSH Director config with NSX-T and AZs"
 ### Task 21: Create Foundation Variables
 
 **Files:**
+
 - Create: `foundations/vcf/vars/director.yml`
 
 **Step 1: Create director variables**
@@ -1849,6 +1870,7 @@ git commit -m "feat(foundations): add director variables for VCF environment"
 ### Task 22: Create Product Versions
 
 **Files:**
+
 - Create: `foundations/vcf/versions/versions.yml`
 
 **Step 1: Create versions file**
@@ -1884,6 +1906,7 @@ git commit -m "feat(foundations): add product versions for TAS 6.0.6"
 ### Task 23: Create DNS Setup Script
 
 **Files:**
+
 - Create: `scripts/setup-dns.sh`
 
 **Step 1: Create DNS setup script**
@@ -1966,6 +1989,7 @@ git commit -m "feat(scripts): add DNS setup script for Pi-hole/Unbound"
 ### Task 24: Create Terraform Validation Script
 
 **Files:**
+
 - Create: `scripts/validate-terraform.sh`
 
 **Step 1: Create validation script**
@@ -2012,6 +2036,7 @@ git commit -m "feat(scripts): add Terraform validation script"
 ### Task 25: Create README
 
 **Files:**
+
 - Create: `README.md`
 
 **Step 1: Create project README**
@@ -2113,6 +2138,7 @@ tas-vcf/
 ├── scripts/           # Helper scripts
 └── docs/              # Documentation
 ```
+
 ```
 
 **Step 2: Commit**
