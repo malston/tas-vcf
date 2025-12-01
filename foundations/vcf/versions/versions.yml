@@ -1,0 +1,14 @@
+# foundations/vcf/versions/versions.yml
+---
+# Ops Manager
+opsman_version: "3.0.*"
+opsman_glob: "ops-manager-vsphere-*.ova"
+
+# TAS
+tas_version: "6.0.6"
+tas_glob: "cf-*.pivotal"
+
+# Stemcell
+stemcell_version: "1.*"
+stemcell_iaas: vsphere
+stemcell_os: ubuntu-jammy
