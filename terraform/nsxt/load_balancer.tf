@@ -54,9 +54,6 @@ resource "nsxt_policy_lb_pool" "gorouter_pool" {
   description          = "Pool for GoRouter instances"
   algorithm            = "ROUND_ROBIN"
   active_monitor_path  = nsxt_policy_lb_http_monitor_profile.gorouter_monitor.path
-  snat_translation {
-    type = "AUTOMAP"
-  }
 
   tag {
     scope = "environment"
@@ -69,9 +66,6 @@ resource "nsxt_policy_lb_pool" "tcp_router_pool" {
   description          = "Pool for TCP Router instances"
   algorithm            = "ROUND_ROBIN"
   active_monitor_path  = nsxt_policy_lb_http_monitor_profile.tcp_router_monitor.path
-  snat_translation {
-    type = "TRANSPARENT"
-  }
 
   tag {
     scope = "environment"
@@ -84,9 +78,6 @@ resource "nsxt_policy_lb_pool" "ssh_pool" {
   description          = "Pool for Diego Brain SSH"
   algorithm            = "ROUND_ROBIN"
   active_monitor_path  = nsxt_policy_lb_tcp_monitor_profile.ssh_monitor.path
-  snat_translation {
-    type = "TRANSPARENT"
-  }
 
   tag {
     scope = "environment"

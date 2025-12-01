@@ -27,7 +27,6 @@ resource "nsxt_policy_nat_rule" "snat_ops_manager" {
   translated_networks  = [var.ops_manager_external_ip]
   logging              = false
   firewall_match       = "MATCH_INTERNAL_ADDRESS"
-  sequence_number      = 10
 
   tag {
     scope = "environment"
