@@ -1,5 +1,6 @@
 # Claude Code local settings
 .claude/settings.local.json
+.claude/conversation-*
 
 # Terraform
 *.tfstate
@@ -26,3 +27,6 @@
 # Platform Automation state
 foundations/*/state/*.yml
 !foundations/*/state/.gitkeep
+
+# Claude
+./cluade/
