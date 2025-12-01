@@ -1,0 +1,25 @@
+# foundations/vcf/config/opsman.yml
+---
+opsman-configuration:
+  vsphere:
+    vcenter:
+      url: ((vcenter_host))
+      username: ((vcenter_username))
+      password: ((vcenter_password))
+      datacenter: ((datacenter_name))
+      datastore: ((datastore_name))
+      ca_cert: ((vcenter_ca_cert))
+    insecure: 1
+    resource_pool: /((datacenter_name))/host/((cluster_name))/Resources/((infrastructure_resource_pool))
+    folder: /((datacenter_name))/vm/((vm_folder))
+    network: ((infrastructure_segment_name))
+    private_ip: ((ops_manager_private_ip))
+    netmask: ((ops_manager_netmask))
+    gateway: ((ops_manager_gateway))
+    dns: ((dns_servers))
+    ntp: ((ntp_servers))
+    ssh_public_key: ((ops_manager_ssh_public_key))
+    hostname: ((ops_manager_hostname))
+    disk_type: thin
+    ssh_password: ((ops_manager_ssh_password))
+    decryption_passphrase: ((ops_manager_decryption_passphrase))
