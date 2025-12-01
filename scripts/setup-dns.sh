@@ -32,23 +32,24 @@ echo "2. Add entries to /etc/unbound/unbound.conf.d/tas.conf:"
 echo ""
 cat << 'EOF'
 server:
-    # TAS Ops Manager
+    # Ops Manager and TCP router (outside sys/apps)
+    local-zone: "opsman.tas.vcf.lab." static
     local-data: "opsman.tas.vcf.lab. A 31.31.10.10"
-    local-data-ptr: "31.31.10.10 opsman.tas.vcf.lab"
 
-    # TAS System Domain (wildcard)
+    local-zone: "tcp.tas.vcf.lab." static
+    local-data: "tcp.tas.vcf.lab. A 31.31.10.22"
+
+    # SSH - more specific zone takes precedence
+    local-zone: "ssh.sys.tas.vcf.lab." static
+    local-data: "ssh.sys.tas.vcf.lab. A 31.31.10.21"
+
+    # Sys domain wildcard (redirect catches all EXCEPT more specific zones above)
     local-zone: "sys.tas.vcf.lab." redirect
     local-data: "sys.tas.vcf.lab. A 31.31.10.20"
 
-    # TAS Apps Domain (wildcard)
+    # Apps domain wildcard
     local-zone: "apps.tas.vcf.lab." redirect
     local-data: "apps.tas.vcf.lab. A 31.31.10.20"
-
-    # TAS SSH
-    local-data: "ssh.sys.tas.vcf.lab. A 31.31.10.21"
-
-    # TAS TCP Router
-    local-data: "tcp.tas.vcf.lab. A 31.31.10.22"
 EOF
 echo ""
 echo "3. Restart Unbound:"
