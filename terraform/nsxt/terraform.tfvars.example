@@ -1,0 +1,30 @@
+# terraform/nsxt/terraform.tfvars.example
+# Copy to terraform.tfvars and fill in values
+
+nsxt_host            = "nsx01.vcf.lab"
+nsxt_username        = "admin"
+nsxt_password        = "CHANGE_ME"
+allow_unverified_ssl = true
+
+environment_name     = "tas"
+edge_cluster_name    = "edge-cluster-01"
+transport_zone_name  = "overlay-tz"
+t0_gateway_name      = "T0-Gateway"
+
+# Network CIDRs
+infrastructure_cidr = "10.0.1.0/24"
+deployment_cidr     = "10.0.2.0/24"
+services_cidr       = "10.0.3.0/24"
+
+# External IPs
+nat_gateway_ip           = "31.31.10.1"
+ops_manager_external_ip  = "31.31.10.10"
+ops_manager_internal_ip  = "10.0.1.10"
+web_lb_vip               = "31.31.10.20"
+ssh_lb_vip               = "31.31.10.21"
+tcp_lb_vip               = "31.31.10.22"
+
+# Container networking
+external_ip_pool_start   = "31.31.10.100"
+external_ip_pool_end     = "31.31.10.200"
+container_ip_block_cidr  = "10.12.0.0/14"
