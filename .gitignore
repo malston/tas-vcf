@@ -15,6 +15,7 @@
 *.pem
 *.key
 !*.key.example
+terraform/certs/generated/
 
 # OS files
 .DS_Store
@@ -27,7 +28,3 @@
 # Platform Automation state
 foundations/*/state/*.yml
 !foundations/*/state/.gitkeep
-
-# Claude
-./cluade/
-terraform/certs/generated/
