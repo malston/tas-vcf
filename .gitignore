@@ -30,3 +30,4 @@ foundations/*/state/*.yml
 
 # Claude
 ./cluade/
+terraform/certs/generated/
