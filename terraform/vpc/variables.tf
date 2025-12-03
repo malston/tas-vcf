@@ -43,19 +43,19 @@ variable "vpc_private_cidr" {
 variable "infrastructure_subnet_cidr" {
   description = "CIDR for infrastructure subnet (Ops Manager, BOSH)"
   type        = string
-  default     = "172.20.1.0/24"
+  default     = "172.20.0.0/24"
 }
 
 variable "deployment_subnet_cidr" {
   description = "CIDR for deployment subnet (TAS Runtime VMs)"
   type        = string
-  default     = "172.20.2.0/24"
+  default     = "172.20.1.0/24"
 }
 
 variable "services_subnet_cidr" {
   description = "CIDR for services subnet (Service Instances)"
   type        = string
-  default     = "172.20.3.0/24"
+  default     = "172.20.2.0/24"
 }
 
 variable "dns_servers" {

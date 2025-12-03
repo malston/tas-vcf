@@ -44,9 +44,9 @@ Internet → T0 Gateway → VPC Gateway → VPC Subnet → Ops Manager VM
 
 | Subnet Name | Type | CIDR | Purpose | DHCP |
 |-------------|------|------|---------|------|
-| tas-vpc-infrastructure | Private | 172.20.1.0/24 | Ops Manager, BOSH Director | Enabled |
-| tas-vpc-deployment | Private | 172.20.2.0/24 | TAS Runtime VMs | Enabled |
-| tas-vpc-services | Private | 172.20.3.0/24 | Service Instances | Enabled |
+| tas-vpc-infrastructure | Private | 172.20.0.0/24 | Ops Manager, BOSH Director | Enabled |
+| tas-vpc-deployment | Private | 172.20.1.0/24 | TAS Runtime VMs | Enabled |
+| tas-vpc-services | Private | 172.20.2.0/24 | Service Instances | Enabled |
 
 ### External IP Allocation Strategy
 
