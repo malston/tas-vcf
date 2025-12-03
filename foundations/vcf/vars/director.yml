@@ -5,9 +5,9 @@ vcenter_host: vc01.vcf.lab
 vcenter_username: ((vcenter_username))
 vcenter_password: ((vcenter_password))
 vcenter_ca_cert: ""
-datacenter_name: VCF-DC
+datacenter_name: VCF-Datacenter
 cluster_name: VCF-Mgmt-Cluster
-datastore_name: vsan-ds
+datastore_name: vsanDatastore
 
 # Ops Manager
 ops_manager_hostname: opsman.tas.vcf.lab

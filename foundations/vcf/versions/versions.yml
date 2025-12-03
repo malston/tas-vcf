@@ -1,14 +1,14 @@
 # foundations/vcf/versions/versions.yml
 ---
-# Ops Manager
-opsman_version: "3.0.*"
+# Ops Manager (Foundation Core 3.1.5)
+opsman_version: "3.1.5"
 opsman_glob: "ops-manager-vsphere-*.ova"
 
-# TAS
+# TAS (Small Runtime 6.0.6)
 tas_version: "6.0.6"
-tas_glob: "cf-*.pivotal"
+tas_glob: "srt-*.pivotal"
 
-# Stemcell
-stemcell_version: "1.*"
+# Stemcell (Ubuntu Jammy for vSphere)
+stemcell_version: "1.990"
 stemcell_iaas: vsphere
 stemcell_os: ubuntu-jammy

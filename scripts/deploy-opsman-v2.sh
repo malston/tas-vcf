@@ -14,7 +14,7 @@ OPSMAN_DNS="192.168.10.2"
 OPSMAN_NTP="pool.ntp.org"
 OPSMAN_HOSTNAME="opsman.tas.vcf.lab"
 NETWORK_NAME="tas-Infrastructure"
-SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/vcf_opsman_ssh_key.key}"
+SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/vcf_opsman_ssh_key}"
 
 # vSphere Configuration
 VCENTER_HOST="vc01.vcf.lab"
@@ -41,7 +41,7 @@ if govc vm.info "$OPSMAN_VM_NAME" &>/dev/null; then
     if [[ "$DELETE_VM" == "yes" ]]; then
         echo "Powering off and deleting existing VM..."
         govc vm.power -off "$OPSMAN_VM_NAME" 2>/dev/null || true
-        govc vm.destroy "$OPSMAN_VM_NAME"
+        govc vm.destroy "$OPSMAN_VM_NAME" || true
         echo "Existing VM deleted"
     else
         echo "Aborting deployment"

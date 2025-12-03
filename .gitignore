@@ -16,6 +16,7 @@
 *.key
 !*.key.example
 terraform/certs/generated/
+.envrc
 
 # OS files
 .DS_Store
