@@ -1,44 +1,29 @@
 # ABOUTME: Output values from TAS VPC Terraform module
-# ABOUTME: Exports VPC and subnet information for use by other modules
+# ABOUTME: Documents configured VPC and subnet information
 
-output "vpc_id" {
-  description = "ID of the TAS VPC"
-  value       = data.nsxt_policy_vpc.tas_vpc.id
+output "vpc_name" {
+  description = "Name of the TAS VPC"
+  value       = var.vpc_name
 }
 
-output "vpc_path" {
-  description = "Policy path of the TAS VPC"
-  value       = data.nsxt_policy_vpc.tas_vpc.path
+output "vpc_cidr" {
+  description = "Private CIDR of the TAS VPC"
+  value       = var.vpc_private_cidr
 }
 
-output "infrastructure_subnet_id" {
-  description = "ID of the infrastructure subnet"
-  value       = data.nsxt_policy_vpc_subnet.infrastructure.id
+output "infrastructure_subnet_cidr" {
+  description = "CIDR of the infrastructure subnet"
+  value       = var.infrastructure_subnet_cidr
 }
 
-output "infrastructure_subnet_path" {
-  description = "Policy path of the infrastructure subnet"
-  value       = data.nsxt_policy_vpc_subnet.infrastructure.path
+output "deployment_subnet_cidr" {
+  description = "CIDR of the deployment subnet"
+  value       = var.deployment_subnet_cidr
 }
 
-output "deployment_subnet_id" {
-  description = "ID of the deployment subnet"
-  value       = data.nsxt_policy_vpc_subnet.deployment.id
-}
-
-output "deployment_subnet_path" {
-  description = "Policy path of the deployment subnet"
-  value       = data.nsxt_policy_vpc_subnet.deployment.path
-}
-
-output "services_subnet_id" {
-  description = "ID of the services subnet"
-  value       = data.nsxt_policy_vpc_subnet.services.id
-}
-
-output "services_subnet_path" {
-  description = "Policy path of the services subnet"
-  value       = data.nsxt_policy_vpc_subnet.services.path
+output "services_subnet_cidr" {
+  description = "CIDR of the services subnet"
+  value       = var.services_subnet_cidr
 }
 
 output "ops_manager_external_ip" {
