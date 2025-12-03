@@ -7,7 +7,7 @@ resource "nsxt_policy_tier1_gateway" "t1_infrastructure" {
   edge_cluster_path         = data.nsxt_policy_edge_cluster.edge_cluster.path
   failover_mode             = "PREEMPTIVE"
   default_rule_logging      = false
-  enable_firewall           = true
+  enable_firewall           = false
   enable_standby_relocation = false
   tier0_path                = data.nsxt_policy_tier0_gateway.t0_gateway.path
   route_advertisement_types = ["TIER1_CONNECTED", "TIER1_NAT", "TIER1_LB_VIP", "TIER1_LB_SNAT"]
@@ -25,7 +25,7 @@ resource "nsxt_policy_tier1_gateway" "t1_deployment" {
   edge_cluster_path         = data.nsxt_policy_edge_cluster.edge_cluster.path
   failover_mode             = "NON_PREEMPTIVE"
   default_rule_logging      = false
-  enable_firewall           = true
+  enable_firewall           = false
   enable_standby_relocation = false
   tier0_path                = data.nsxt_policy_tier0_gateway.t0_gateway.path
   route_advertisement_types = ["TIER1_CONNECTED", "TIER1_NAT", "TIER1_LB_VIP", "TIER1_LB_SNAT"]
@@ -43,7 +43,7 @@ resource "nsxt_policy_tier1_gateway" "t1_services" {
   edge_cluster_path         = data.nsxt_policy_edge_cluster.edge_cluster.path
   failover_mode             = "NON_PREEMPTIVE"
   default_rule_logging      = false
-  enable_firewall           = true
+  enable_firewall           = false
   enable_standby_relocation = false
   tier0_path                = data.nsxt_policy_tier0_gateway.t0_gateway.path
   route_advertisement_types = ["TIER1_CONNECTED", "TIER1_NAT"]
