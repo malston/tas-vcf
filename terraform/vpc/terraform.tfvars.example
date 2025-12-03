@@ -1,0 +1,30 @@
+# ABOUTME: Example variable values for TAS VPC module
+# ABOUTME: Copy to terraform.tfvars and customize for your environment
+
+# NSX Manager connection
+nsxt_host              = "nsx01.vcf.lab"
+nsxt_username          = "admin"
+# nsxt_password is sensitive - set via environment variable:
+# export TF_VAR_nsxt_password=$(op read "op://Private/nsx01.vcf.lab/password")
+allow_unverified_ssl   = true
+
+# VPC configuration (must match manually created VPC)
+vpc_name               = "tas-vpc"
+vpc_private_cidr       = "172.26.0.0/16"
+
+# Subnet CIDRs (must match manually created subnets)
+infrastructure_subnet_cidr = "172.26.1.0/24"
+deployment_subnet_cidr     = "172.26.2.0/24"
+services_subnet_cidr       = "172.26.3.0/24"
+
+# DNS configuration
+dns_servers            = ["192.168.10.2"]
+
+# External IP assignments (via "Assign External IP" in NSX UI)
+ops_manager_external_ip = "31.31.10.10"
+web_lb_vip             = "31.31.10.20"
+ssh_lb_vip             = "31.31.10.21"
+tcp_lb_vip             = "31.31.10.22"
+
+# Environment tag
+environment_name       = "tas"
