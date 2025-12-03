@@ -125,9 +125,33 @@ done
 echo ""
 
 echo ""
+echo "=== Setting Console Password (for backup access) ==="
+echo "Password will be: VMware1!"
+
+# Wait for SSH to be available, then set password via SSH
+echo "Waiting for SSH to become available..."
+for i in {1..60}; do
+    if timeout 3 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=2 -i "$SSH_KEY_PATH" ubuntu@31.31.10.10 "echo 'SSH ready'" &>/dev/null; then
+        echo "SSH is available! Setting console password..."
+        ssh -o StrictHostKeyChecking=no -i "$SSH_KEY_PATH" ubuntu@31.31.10.10 "echo 'ubuntu:VMware1!' | sudo chpasswd" 2>&1
+        if [ $? -eq 0 ]; then
+            echo "✓ Console password set successfully"
+        else
+            echo "⚠ Warning: Could not set console password (but SSH works)"
+        fi
+        break
+    fi
+    if [ $((i % 5)) -eq 0 ]; then
+        echo "Still waiting for SSH... ($i/60)"
+    fi
+    sleep 2
+done
+
+echo ""
 echo "Access Ops Manager:"
 echo "  Web UI: https://31.31.10.10 or https://$OPSMAN_HOSTNAME"
 echo "  SSH: ssh -i $SSH_KEY_PATH ubuntu@31.31.10.10"
+echo "  Console: Username: ubuntu, Password: VMware1!"
 echo ""
 echo "NOTE: It may take 5-10 minutes for the web interface to become available"
 echo "after the VM boots as services initialize."

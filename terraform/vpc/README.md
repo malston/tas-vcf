@@ -22,15 +22,15 @@ NSX VPC is relatively new (introduced in VCF 9) and the Terraform provider has l
 
 ### Manual Steps (NSX UI)
 
-1. **Create VPC**: `tas-vpc` with private CIDR `172.26.0.0/16`
+1. **Create VPC**: `tas-vpc` with private CIDR `172.20.0.0/16`
    - Enable "Centralized Connectivity Gateway"
    - Connect to T0 gateway `transit-gw`
    - Assign external IP block `31.31.10.0/24`
 
 2. **Create Subnets** in `tas-vpc`:
-   - `tas-infrastructure`: 172.26.1.0/24 (Ops Manager, BOSH)
-   - `tas-deployment`: 172.26.2.0/24 (TAS Runtime VMs)
-   - `tas-services`: 172.26.3.0/24 (Service Instances)
+   - `tas-infrastructure`: 172.20.1.0/24 (Ops Manager, BOSH)
+   - `tas-deployment`: 172.20.2.0/24 (TAS Runtime VMs)
+   - `tas-services`: 172.20.3.0/24 (Service Instances)
    - All subnets: Private type, DHCP enabled, DNS: 192.168.10.2
 
 See detailed instructions: `docs/plans/2025-12-03-tas-vpc-migration-plan.md`

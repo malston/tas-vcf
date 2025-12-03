@@ -35,7 +35,7 @@ Internet → T0 Gateway → VPC Gateway → VPC Subnet → Ops Manager VM
 ### VPC Configuration
 
 **VPC Name**: `tas-vpc`
-**Private CIDR**: `172.26.0.0/16` (internal addressing)
+**Private CIDR**: `172.20.0.0/16` (internal addressing)
 **External IP Block**: Reuse existing `31.31.10.0/24` or allocate new block
 **Gateway Mode**: Centralized Connectivity Gateway (required for vSphere)
 **Edge Cluster**: `ec-01` (existing)
@@ -44,9 +44,9 @@ Internet → T0 Gateway → VPC Gateway → VPC Subnet → Ops Manager VM
 
 | Subnet Name | Type | CIDR | Purpose | DHCP |
 |-------------|------|------|---------|------|
-| tas-vpc-infrastructure | Private | 172.26.1.0/24 | Ops Manager, BOSH Director | Enabled |
-| tas-vpc-deployment | Private | 172.26.2.0/24 | TAS Runtime VMs | Enabled |
-| tas-vpc-services | Private | 172.26.3.0/24 | Service Instances | Enabled |
+| tas-vpc-infrastructure | Private | 172.20.1.0/24 | Ops Manager, BOSH Director | Enabled |
+| tas-vpc-deployment | Private | 172.20.2.0/24 | TAS Runtime VMs | Enabled |
+| tas-vpc-services | Private | 172.20.3.0/24 | Service Instances | Enabled |
 
 ### External IP Allocation Strategy
 
@@ -81,7 +81,7 @@ Using "Assign External IP" feature for:
    - Navigate to: Networking → Virtual Private Clouds
    - Click "Add VPC"
    - Name: `tas-vpc`
-   - Private IPv4 CIDR: `172.26.0.0/16`
+   - Private IPv4 CIDR: `172.20.0.0/16`
    - VPC External IP Block: Select `31.31.10.0/24`
    - Enable "Centralized Connectivity Gateway"
    - Edge Cluster: `ec-01`

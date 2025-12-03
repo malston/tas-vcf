@@ -10,12 +10,12 @@ allow_unverified_ssl   = true
 
 # VPC configuration (must match manually created VPC)
 vpc_name               = "tas-vpc"
-vpc_private_cidr       = "172.26.0.0/16"
+vpc_private_cidr       = "172.20.0.0/16"
 
 # Subnet CIDRs (must match manually created subnets)
-infrastructure_subnet_cidr = "172.26.1.0/24"
-deployment_subnet_cidr     = "172.26.2.0/24"
-services_subnet_cidr       = "172.26.3.0/24"
+infrastructure_subnet_cidr = "172.20.1.0/24"
+deployment_subnet_cidr     = "172.20.2.0/24"
+services_subnet_cidr       = "172.20.3.0/24"
 
 # DNS configuration
 dns_servers            = ["192.168.10.2"]

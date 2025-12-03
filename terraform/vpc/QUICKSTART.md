@@ -7,7 +7,7 @@
 3. **Configure**:
    ```
    Name: tas-vpc
-   Private IPv4 CIDR: 172.26.0.0/16
+   Private IPv4 CIDR: 172.20.0.0/16
    VPC External IP Block: 31.31.10.0/24 (select existing)
    Centralized Connectivity Gateway: ✓ Enabled
    Edge Cluster: ec-01
@@ -23,8 +23,8 @@ Right-click `tas-vpc` → "New Subnet" (do this 3 times):
 ```
 Name: tas-infrastructure
 Type: Private
-CIDR: 172.26.1.0/24
-Gateway: 172.26.1.1 (auto)
+CIDR: 172.20.1.0/24
+Gateway: 172.20.1.1 (auto)
 DNS: 192.168.10.2
 DHCP: Enabled
 ```
@@ -33,8 +33,8 @@ DHCP: Enabled
 ```
 Name: tas-deployment
 Type: Private
-CIDR: 172.26.2.0/24
-Gateway: 172.26.2.1 (auto)
+CIDR: 172.20.2.0/24
+Gateway: 172.20.2.1 (auto)
 DNS: 192.168.10.2
 DHCP: Enabled
 ```
@@ -43,8 +43,8 @@ DHCP: Enabled
 ```
 Name: tas-services
 Type: Private
-CIDR: 172.26.3.0/24
-Gateway: 172.26.3.1 (auto)
+CIDR: 172.20.3.0/24
+Gateway: 172.20.3.1 (auto)
 DNS: 192.168.10.2
 DHCP: Enabled
 ```
