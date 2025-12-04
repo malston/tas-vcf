@@ -153,6 +153,37 @@ snat_mode = "TRANSPARENT"  # SSH sessions need real client IPs
 - AUTOMAP: Better for high-connection-count protocols (HTTP) but loses client IP visibility
 - TRANSPARENT: Preserves client IPs but can exhaust NAT port ranges under heavy load
 
+### Gorouter TLS Cipher Configuration
+
+**Default**: Gorouter uses TLS 1.2 ciphers only
+**Override**: Add TLS 1.3 cipher suites to support modern TLS negotiation
+**Location**: `foundations/vcf/config/tas.yml:41`
+
+**Why Changed**:
+- **Symptom**: HTTPS connections to `api.sys.tas.vcf.lab:443` failed with TLS handshake errors
+- **Root Cause**: Gorouter attempted TLS 1.3 negotiation but only had TLS 1.2 ciphers configured
+- **Evidence**: `openssl s_client` showed `Protocol: TLSv1.3` but `Cipher is (NONE)` (handshake failed)
+- **Impact**: Smoke tests failed with "Invalid SSL Cert" errors
+
+**Configuration**:
+```yaml
+.properties.gorouter_ssl_ciphers:
+  value: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384
+```
+
+**What Changed**:
+- **Before**: `ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384` (TLS 1.2 only)
+- **After**: Added `TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384` (TLS 1.3 support)
+- Maintains backward compatibility with TLS 1.2 clients
+
+**Why TLS 1.3 Ciphers Matter**:
+- TLS 1.3 and TLS 1.2 use different cipher suite naming conventions
+- TLS 1.2: `ECDHE-RSA-AES128-GCM-SHA256` (key exchange + auth + cipher)
+- TLS 1.3: `TLS_AES_128_GCM_SHA256` (cipher only, key exchange built into protocol)
+- Attempting TLS 1.3 handshake without TLS 1.3 ciphers causes connection failure
+
+**Commit**: `851f65f` (2025-12-04)
+
 ### BOSH Director Configuration Overrides
 
 **Defaults Changed**: Multiple BOSH Director operational properties
