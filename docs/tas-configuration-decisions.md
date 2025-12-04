@@ -63,6 +63,157 @@ This document explains the decision-making process for determining configuration
 
 **Property Discovery**: Use `om curl -p /api/v0/staged/products/<product-guid>/properties` to get actual available properties for the specific tile version.
 
+## Critical Defaults Overridden
+
+This section documents configuration defaults that were deliberately overridden and the rationale for each decision. These represent lessons learned during deployment.
+
+### NSX-T T1 Gateway Firewall Configuration
+
+**Default**: T1 gateways have `enable_firewall = true` with no rules defined
+**Override**: Set `enable_firewall = false` in `terraform/nsxt/t1_gateways.tf`
+
+**Why Changed**:
+- **The Silent Failure Pattern**: Enabling firewalls without rules creates a default DENY-ALL policy
+- ICMP succeeds (NSX-T implicitly allows for troubleshooting) but TCP traffic silently times out
+- No error message indicates firewall is the cause - extremely difficult to diagnose
+- Symptom: Ops Manager VM responded to ping but SSH/HTTPS connections timed out
+
+**Configuration** (all three T1 gateways):
+```terraform
+resource "nsxt_policy_tier1_gateway" "tas_infrastructure" {
+  enable_firewall = false  # Override: Disable rather than leave with no rules
+  # ... other settings
+}
+```
+
+**For Production**: Create explicit firewall rules instead of disabling. Never enable firewalls without rules.
+
+**Affected Lines**:
+- `terraform/nsxt/t1_gateways.tf:394` (Infrastructure T1)
+- `terraform/nsxt/t1_gateways.tf:412` (Deployment T1)
+- `terraform/nsxt/t1_gateways.tf:430` (Services T1)
+
+### NSX-T Licensing Constraint
+
+**Limitation Discovered**: NSX-T in this environment can only create **stateless firewall rules**
+**Impact**: Cannot use connection state tracking (which most firewalls do by default)
+**Root Cause**: Missing security license for NSX-T
+**Decision**: Disable T1 firewalls entirely rather than attempt fragile stateless rules
+
+**Why This Matters**:
+- Stateful firewalls track TCP connections (SYN/ACK/FIN state machine)
+- Stateless rules must explicitly allow both directions of traffic
+- Very difficult to secure correctly without state tracking
+- Influenced decision to use `enable_firewall = false`
+
+### T1 Gateway Failover Mode Configuration
+
+**Default**: NSX-T T1 gateways use `NON_PREEMPTIVE` failover mode
+**Override**: Set Infrastructure T1 to `PREEMPTIVE` mode
+
+**Why Changed**:
+```terraform
+# Infrastructure T1 (Ops Manager, BOSH Director)
+failover_mode = "PREEMPTIVE"  # Override: Ops Manager state consistency is critical
+
+# Deployment T1 (Diego cells, application workloads)
+failover_mode = "NON_PREEMPTIVE"  # Keep default: App VMs can tolerate brief outages
+
+# Services T1 (Service instances)
+failover_mode = "NON_PREEMPTIVE"  # Keep default: Eventual consistency acceptable
+```
+
+**Rationale**:
+- **Infrastructure**: Ops Manager and BOSH Director require consistent state; preemptive failover ensures fastest recovery
+- **Deployment/Services**: Application VMs can reschedule; non-preemptive avoids unnecessary failovers during edge maintenance
+- Trade-off: Preemptive causes more frequent failovers but ensures fastest recovery
+
+### NSX-T Load Balancer SNAT Configuration
+
+**Default**: Load balancer pools use `TRANSPARENT` SNAT (no source address translation)
+**Override**: Different SNAT modes per workload type
+
+**Configuration**:
+```terraform
+# GoRouter pool - Override to AUTOMAP
+snat_mode = "AUTOMAP"  # Each VM gets its own SNAT IP (Kubernetes-style)
+
+# TCP Router pool - Keep TRANSPARENT
+snat_mode = "TRANSPARENT"  # Preserves source IPs for debugging
+
+# Diego SSH pool - Keep TRANSPARENT
+snat_mode = "TRANSPARENT"  # SSH sessions need real client IPs
+```
+
+**Why Changed**:
+- **AUTOMAP for GoRouter**: Prevents port exhaustion from HTTP connection pooling; each Diego cell gets its own outbound IP
+- **TRANSPARENT for TCP Router**: Real client IPs essential for application logging and security
+- **TRANSPARENT for SSH Proxy**: Client IP needed for audit logs and security policies
+
+**Trade-offs**:
+- AUTOMAP: Better for high-connection-count protocols (HTTP) but loses client IP visibility
+- TRANSPARENT: Preserves client IPs but can exhaust NAT port ranges under heavy load
+
+### BOSH Director Configuration Overrides
+
+**Defaults Changed**: Multiple BOSH Director operational properties
+**Location**: `foundations/vcf/config/director.yml:1745-1749`
+
+**Configuration**:
+```yaml
+director_configuration:
+  ntp_servers_string: pool.ntp.org        # Override: Essential for certificate validation
+  resurrector_enabled: true                # Override: Auto-recover failed VMs
+  post_deploy_enabled: true                # Override: Post-deploy scripts for logging
+  retry_bosh_deploys: true                 # Override: Transient failures shouldn't be permanent
+```
+
+**Why Changed**:
+
+1. **NTP Configuration** (`ntp_servers_string: pool.ntp.org`):
+   - Default: No NTP servers configured
+   - Impact: Time drift causes certificate validation failures, authentication issues
+   - Essential for TLS/SSL to function correctly
+
+2. **BOSH Resurrector** (`resurrector_enabled: true`):
+   - Default: Disabled (VMs stay down after failure)
+   - Impact: Manual intervention required for every VM failure
+   - Auto-recovery improves availability in lab and production
+
+3. **Post-Deploy Scripts** (`post_deploy_enabled: true`):
+   - Default: Disabled
+   - Impact: Logging and monitoring agents not configured
+   - Needed for operational visibility
+
+4. **Retry on Failure** (`retry_bosh_deploys: true`):
+   - Default: Deployments fail immediately on transient errors
+   - Impact: Network glitches cause permanent deployment failures
+   - Retry logic handles temporary infrastructure issues
+
+### vSphere DRS Rule Configuration
+
+**Default**: DRS rules are mandatory (hard rules)
+**Override**: Use soft (should) rules instead of mandatory (must) rules
+
+**Configuration**:
+```terraform
+resource "vsphere_compute_cluster_vm_anti_affinity_rule" "tas_az1" {
+  mandatory = false  # Override: Soft rule prevents deployment failures
+  # ... other settings
+}
+```
+
+**Why Changed**:
+- **Hard Rules** (mandatory = true): VM placement fails if preferred host is unavailable
+- **Soft Rules** (mandatory = false): vSphere tries to honor placement but won't block deployment
+- Prevents cascading failures during host maintenance or failures
+- Still achieves desired placement in normal operations
+
+**Affected Resources**:
+- AZ placement rules for Diego cells
+- Infrastructure component separation rules
+- All documented in `terraform/vsphere/`
+
 ### 1. Network Configuration
 
 #### Decision: Use NSX-T Native Integration
@@ -259,8 +410,9 @@ chmod 600 foundations/vcf/state/credhub-key.txt
 
 **Security Considerations**:
 - Key stored outside git (in `state/` directory)
-- File permissions restricted to owner-only
-- Backup required for disaster recovery
+- File permissions restricted to owner-only (600)
+- **Backup location**: `op://Private/TAS VCF Lab - Credhub Encryption Key/password`
+- Backup required for disaster recovery - without this key, all CredHub credentials are unrecoverable
 
 ### 7. Resource Sizing
 
@@ -392,10 +544,12 @@ resource-config:
 ## References
 
 ### Official Documentation
-- [Small Footprint TAS](https://docs.vmware.com/en/VMware-Tanzu-Application-Service/6.0/tas-for-vms/small-footprint.html)
-- [NSX-T Integration](https://docs.vmware.com/en/VMware-Tanzu-Application-Service/6.0/tas-for-vms/nsxt-index.html)
-- [Load Balancer Configuration](https://docs.vmware.com/en/VMware-Tanzu-Application-Service/6.0/tas-for-vms/configure-lb.html)
-- [Security](https://docs.vmware.com/en/VMware-Tanzu-Application-Service/6.0/tas-for-vms/security.html)
+- [Configuring TAS for VMs](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/elastic-application-runtime/6-0/eart/toc-tas-install-features-index.html)
+- [Small Footprint TAS](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/elastic-application-runtime/6-0/eart/small-footprint.html)
+- [Deploying TAS with NSX-T Networking](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/6-0/tpcf/vsphere-nsx-t.html)
+- [Configuring Load Balancing](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/6-0/tpcf/configure-lb.html)
+- [Load Balancer Health Checks](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/elastic-application-runtime/6-0/eart/configure-lb-healthcheck.html)
+- [Container Security](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/6-0/tpcf/container-security.html)
 
 ### Project Documents
 - Design: `docs/plans/2025-11-25-tas-vcf-design.md`
