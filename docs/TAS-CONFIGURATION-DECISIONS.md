@@ -30,6 +30,39 @@ This document explains the decision-making process for determining configuration
 
 ## Configuration Decision Framework
 
+### Important: Small Footprint TAS Property Differences
+
+**Critical Discovery**: Small Footprint TAS (product name `cf`) has different property names and structure than regular TAS (product name `srt`). This significantly impacted our configuration process.
+
+**Key Differences**:
+
+1. **NSX-T Integration Location**:
+   - ❌ **NOT in TAS tile**: `.properties.nsx_networking.*` properties don't exist
+   - ✅ **In BOSH Director**: NSX-T is configured at the IaaS level in Director configuration
+   - Result: All NSX-T connection details (host, username, password, CA cert) are in Director config only
+
+2. **CredHub Encryption**:
+   - ❌ Regular TAS: `.properties.credhub_key_encryption_passwords`
+   - ✅ Small Footprint TAS: `.properties.credhub_internal_provider_keys`
+
+3. **Diego Cell Capacity**:
+   - ❌ Regular TAS: `.properties.diego_cell_disk_capacity` and `.properties.diego_cell_memory_capacity`
+   - ✅ Small Footprint TAS: `.diego_cell.executor_disk_capacity` and `.diego_cell.executor_memory_capacity`
+   - Note: These are component-level properties, not under `.properties`
+
+4. **Load Balancer Configuration**:
+   - ❌ AWS-specific: `elb_names` in resource-config (causes error on vSphere)
+   - ✅ vSphere with NSX-T: Load balancer pool membership handled automatically by BOSH via NSX-T integration
+   - No explicit load balancer configuration needed in TAS tile for vSphere
+
+5. **Required Fields**:
+   - `.mysql_monitor.recipient_email` - Required field for MySQL monitoring alerts (even in lab environments)
+
+6. **System Logging**:
+   - `.properties.system_logging` - Exists but is non-configurable, omit from configuration
+
+**Property Discovery**: Use `om curl -p /api/v0/staged/products/<product-guid>/properties` to get actual available properties for the specific tile version.
+
 ### 1. Network Configuration
 
 #### Decision: Use NSX-T Native Integration
@@ -68,81 +101,75 @@ This document explains the decision-making process for determining configuration
 
 ### 2. NSX-T Integration Details
 
-#### Decision: NSX-T Policy API Mode
-**Rationale**:
-- Policy API is the modern NSX-T API (vs. older Manager API)
-- Simpler configuration model
-- Better alignment with NSX 4.0+ features
-- VMware recommendation for new deployments
+**IMPORTANT**: NSX-T integration for Small Footprint TAS is configured entirely at the BOSH Director level, **NOT in the TAS tile**. The `.properties.nsx_networking.*` properties do not exist in Small Footprint TAS.
 
-**Configuration**:
+#### Decision: NSX-T Integration at BOSH Director Level
+**Rationale**:
+- Small Footprint TAS uses BOSH Director's IaaS configuration for NSX-T integration
+- NSX-T Manager connection details (host, username, password, CA cert) configured in Director
+- Container networking uses Silk CNI plugin, not NSX-T NCP
+- Load balancer pool membership handled automatically via BOSH NSX-T integration
+
+**Configuration Location**: `foundations/vcf/config/director.yml`
 ```yaml
-.properties.nsx_networking.enable.nsx_policy_api: true
+properties-configuration:
+  iaas_configuration:
+    nsx_networking_enabled: true
+    nsx_mode: nsx-t
+    nsx_address: nsx01.vcf.lab
+    nsx_username: admin
+    nsx_password: ((nsxt_password))
+    nsx_ca_certificate: ((nsxt_ca_cert))
 ```
 
 #### Decision: Container Network CIDR Blocks
 **Rationale**:
-- Need non-overlapping RFC1918 space
-- `10.255.0.0/16` for Silk CNI plugin overlay
-- `10.12.0.0/14` for container IP assignments (1,048,576 IPs)
-- Large enough for growth but not wasteful
+- Need non-overlapping RFC1918 space for Silk overlay network
+- `10.255.0.0/16` for Silk CNI plugin overlay (configured in TAS tile)
+- Large enough for thousands of containers
 
-**Configuration**:
+**Configuration in TAS Tile**:
 ```yaml
-.properties.nsx_networking.enable.overlay_cidr: 10.255.0.0/16
-.properties.nsx_networking.enable.ip_block_cidr: 10.12.0.0/14
+.properties.container_networking_interface_plugin: silk
+.properties.container_networking_interface_plugin.silk.network_cidr: 10.255.0.0/16
+.properties.container_networking_interface_plugin.silk.network_mtu: 1454
 ```
 
-**IP Capacity Analysis**:
-- /14 provides 4x /16 networks = 262,144 containers per /16
-- Sufficient for 1000+ Diego cells at 250 containers each
-
-#### Decision: NSX-T Resource Names
-**Rationale**:
-- Use `tas-` prefix for all NSX-T resources created by TAS
-- Makes resources easy to identify and filter
-- Follows naming convention established in Terraform
-
-**Configuration**:
-```yaml
-.properties.nsx_networking.enable.foundation_name: tas
-```
-
-**Created Resources**:
-- IP Blocks: `tas-container-ip-block`
-- IP Pools: `tas-external-ip-pool`
-- T0 Router: Uses existing `transit-gw`
-- Logical Switches: Created per-org by TAS
+**Note**: MTU set to 1454 to account for VXLAN encapsulation overhead (1500 - 46 bytes)
 
 ### 3. Load Balancer Configuration
 
-#### Decision: Map TAS Components to NSX-T Load Balancer Pools
+#### Decision: Automatic Load Balancer Pool Membership via NSX-T
 **Rationale**:
-- NSX-T load balancers already configured via Terraform
-- Automatic registration of VMs with pools
-- No manual load balancer configuration required
-- High availability for all ingress points
+- NSX-T load balancers and pools already configured via Terraform
+- BOSH Director NSX-T integration handles automatic VM registration with pools
+- **vSphere-specific**: `elb_names` property (AWS-specific) is not supported and causes errors
+- Load balancer pool membership managed via BOSH vm_extensions and NSX-T tags
+- No explicit load balancer configuration needed in TAS tile
 
 **Configuration**:
+**REMOVED from TAS tile** (causes error on vSphere):
 ```yaml
+# ❌ DO NOT USE - AWS-specific, not supported on vSphere
 resource-config:
   router:
     elb_names:
-      - tas-gorouter-pool    # HTTP/HTTPS traffic to apps
-  tcp_router:
-    elb_names:
-      - tas-tcp-router-pool  # TCP routing for apps
-  diego_brain:
-    elb_names:
-      - tas-ssh-pool         # SSH access to app containers
+      - tas-gorouter-pool  # This causes: {"errors":{"elb_names":["is not supported on vsphere"]}}
 ```
 
-**Pool Mapping**:
-| Component | Pool | VIP | Purpose |
-|-----------|------|-----|---------|
+**Actual Configuration**:
+- Load balancer pools created via Terraform in `terraform/nsxt/`
+- VMs automatically registered with pools via BOSH NSX-T integration
+- No tile-level configuration required
+
+**Load Balancer Architecture**:
+| Component | NSX-T Pool | VIP | Purpose |
+|-----------|------------|-----|---------|
 | Gorouter | tas-gorouter-pool | 31.31.10.20:80,443 | HTTP/HTTPS app traffic |
 | TCP Router | tas-tcp-router-pool | 31.31.10.22:1024-65535 | TCP app traffic |
 | Diego Brain (SSH Proxy) | tas-ssh-pool | 31.31.10.21:2222 | SSH to containers |
+
+**Note**: For production deployments requiring explicit pool membership, use BOSH vm_extensions in Director configuration.
 
 ### 4. Availability Zones
 
