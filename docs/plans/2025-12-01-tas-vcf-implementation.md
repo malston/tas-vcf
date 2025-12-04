@@ -1834,7 +1834,7 @@ nsxt_ca_cert: ""
 infrastructure_segment_name: tas-Infrastructure
 infrastructure_cidr: 10.0.1.0/24
 infrastructure_gateway: 10.0.1.1
-infrastructure_reserved_ips: 10.0.1.1-10.0.1.9
+infrastructure_reserved_ips: 10.0.1.1-10.0.1.10
 
 # Networks - Deployment
 deployment_segment_name: tas-Deployment

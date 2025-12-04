@@ -57,12 +57,12 @@ nsxt_ca_cert: |
   HkwFLJgLRarHjVRIgPina/2Qcsk=
   -----END CERTIFICATE-----
 
-# Networks - VPC Infrastructure (CRITICAL: This is the VPC subnet, not traditional NSX-T segment)
-# VPC subnet name from NSX (this is NOT the traditional tas-Infrastructure segment)
-infrastructure_network_name: tas-infrastructure
-infrastructure_cidr: 172.20.0.0/24
-infrastructure_gateway: 172.20.0.1
-infrastructure_reserved_ips: 172.20.0.1-172.20.0.10
+# Networks - Traditional NSX-T Infrastructure Segment
+# CRITICAL: Must use exact segment name (case-sensitive)
+infrastructure_network_name: tas-Infrastructure
+infrastructure_cidr: 10.0.1.0/24
+infrastructure_gateway: 10.0.1.1
+infrastructure_reserved_ips: 10.0.1.1-10.0.1.10
 
 # DNS and NTP
 dns_servers: 192.168.10.2
