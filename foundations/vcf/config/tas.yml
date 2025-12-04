@@ -90,8 +90,6 @@ resource-config:
     instances: automatic
     instance_type:
       id: automatic
-    elb_names:
-      - ((gorouter_lb_pool))
   tcp_router:
     instances: 0
     instance_type:
