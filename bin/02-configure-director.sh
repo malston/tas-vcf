@@ -7,6 +7,15 @@ set -e
 CUR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FOUNDATION="vcf"
 
+# Set up logging
+LOG_DIR="${CUR_DIR}/../logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="${LOG_DIR}/02-configure-director-$(date +%Y%m%d-%H%M%S).log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "Log file: $LOG_FILE"
+echo "Started at: $(date)"
+echo ""
+
 # Get sensitive values from 1Password
 vcenter_password=$(op read "op://Private/vc01.vcf.lab/password")
 nsxt_password=$(op read "op://Private/nsx01.vcf.lab/password")
