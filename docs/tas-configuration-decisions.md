@@ -51,8 +51,7 @@ This document explains the decision-making process for determining configuration
    - Note: These are component-level properties, not under `.properties`
 
 4. **Load Balancer Configuration**:
-   - ❌ AWS-specific: `elb_names` in resource-config (causes error on vSphere)
-   - ✅ vSphere with NSX-T: Load balancer pool membership handled automatically by BOSH via NSX-T integration
+   - vSphere with NSX-T: Load balancer pool membership handled automatically by BOSH via NSX-T integration
    - No explicit load balancer configuration needed in TAS tile for vSphere
 
 5. **Required Fields**:
@@ -534,8 +533,8 @@ resource-config:
 
 ### Official Documentation
 - [Configuring TAS for VMs](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/elastic-application-runtime/6-0/eart/toc-tas-install-features-index.html)
-- [Small Footprint TAS](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/elastic-application-runtime/6-0/eart/small-footprint.html)
-- [Deploying TAS with NSX-T Networking](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/6-0/tpcf/vsphere-nsx-t.html)
+- [TAS for VMs Resource Requirements](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/6-0/tpcf/requirements.html) (includes Small Footprint)
+- [Deploying TAS with NSX-T Networking](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/elastic-application-runtime/6-0/eart/vsphere-nsx-t.html)
 - [Configuring Load Balancing](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/6-0/tpcf/configure-lb.html)
 - [Load Balancer Health Checks](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/elastic-application-runtime/6-0/eart/configure-lb-healthcheck.html)
 - [Container Security](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/6-0/tpcf/container-security.html)
