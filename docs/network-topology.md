@@ -6,51 +6,51 @@ This document describes the complete network topology for TAS on VCF 9 deploymen
 
 ## Network Diagram
 
-```
+```sh
 ┌─────────────────────────────────────────────────────────────────────┐
 │ External Network (Your Laptop)                                      │
-│                                                                      │
-│  Laptop: 192.168.2.12                                              │
+│                                                                     │
+│  Laptop: 192.168.2.12                                               │
 │     │                                                               │
-│     └─► UniFi Router (192.168.2.1)                                 │
-│            │                                                         │
-│            └─► MikroTik Router (192.168.10.250)                    │
-│                   │                                                  │
+│     └─► UniFi Router (192.168.2.1)                                  │
+│            │                                                        │
+│            └─► MikroTik Router (192.168.10.250)                     │
+│                   │                                                 │
 │                   │ [STATIC ROUTE REQUIRED HERE]                    │
-│                   │ 31.31.0.0/16 → 172.30.70.2                     │
-│                   │                                                  │
-└───────────────────┼──────────────────────────────────────────────────┘
+│                   │ 31.31.0.0/16 → 172.30.70.2                      │
+│                   │                                                 │
+└───────────────────┼─────────────────────────────────────────────────┘
                     │
-┌───────────────────┼──────────────────────────────────────────────────┐
-│ VCF Infrastructure │                                                  │
-│                    │                                                  │
+┌───────────────────┼─────────────────────────────────────────────────┐
+│ VCF Infrastructure │                                                │
+│                    │                                                │
 │  Management Network (172.30.0.0/24)                                 │
 │  ├─ vCenter: 172.30.0.10                                            │
 │  ├─ NSX Manager: 172.30.0.20                                        │
 │  ├─ ESXi Hosts:                                                     │
-│  │  ├─ esx01: 172.30.0.11                                          │
-│  │  ├─ esx02: 172.30.0.12                                          │
-│  │  └─ esx03: 172.30.0.13                                          │
-│  │                                                                   │
-│  NSX Edge Uplink Network (VLAN 70: 172.30.70.0/24)                 │
-│  ├─ Upstream Gateway: 172.30.70.1                                  │
-│  ├─ Edge Node 01: 172.30.70.2                                      │
-│  ├─ Edge Node 02: 172.30.70.3                                      │
-│  └─ NSX VPC Gateway: 172.30.70.5 ◄── [ROUTE TARGET]               │
+│  │  ├─ esx01: 172.30.0.11                                           │
+│  │  ├─ esx02: 172.30.0.12                                           │
+│  │  └─ esx03: 172.30.0.13                                           │
+│  │                                                                  │
+│  NSX Edge Uplink Network (VLAN 70: 172.30.70.0/24)                  │
+│  ├─ Upstream Gateway: 172.30.70.1                                   │
+│  ├─ Edge Node 01: 172.30.70.2                                       │
+│  ├─ Edge Node 02: 172.30.70.3                                       │
+│  └─ NSX VPC Gateway: 172.30.70.5 ◄── [ROUTE TARGET]                 │
 │      │                                                              │
-│      └─► T0 Gateway: transit-gw                                    │
-│             │                                                        │
-│             └─► NSX VPC: tas-vpc                                   │
-│                    │                                                 │
-│                    ├─ VPC Subnet: tas-infrastructure               │
-│                    │  CIDR: 172.20.0.0/24                          │
-│                    │  Gateway: 172.20.0.1                          │
-│                    │                                                 │
-│                    └─ Ops Manager VM                               │
+│      └─► T0 Gateway: transit-gw                                     │
+│             │                                                       │
+│             └─► NSX VPC: tas-vpc                                    │
+│                    │                                                │
+│                    ├─ VPC Subnet: tas-infrastructure                │
+│                    │  CIDR: 172.20.0.0/24                           │
+│                    │  Gateway: 172.20.0.1                           │
+│                    │                                                │
+│                    └─ Ops Manager VM                                │
 │                       Internal IP: 172.20.0.10                      │
-│                       External IP: 31.31.0.11 (VPC auto-assigned)  │
-│                                                                      │
-└──────────────────────────────────────────────────────────────────────┘
+│                       External IP: 31.31.0.11 (VPC auto-assigned)   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Routing Configuration
@@ -60,6 +60,7 @@ This document describes the complete network topology for TAS on VCF 9 deploymen
 **Purpose**: Route 31.31.x.x traffic to MikroTik router
 
 **UniFi Controller Configuration**:
+
 1. Navigate to: Settings → Routing & Firewall → Static Routes
 2. Click: Create New Route
 3. Configure:
@@ -71,6 +72,7 @@ This document describes the complete network topology for TAS on VCF 9 deploymen
 4. Click: Apply Changes
 
 **Verification**:
+
 ```bash
 # From your laptop - should show MikroTik as hop 2
 traceroute 31.31.0.11
@@ -81,11 +83,13 @@ traceroute 31.31.0.11
 **Purpose**: Route external VPC IP traffic to NSX VPC Gateway
 
 **CLI Configuration**:
+
 ```bash
 /ip route add dst-address=31.31.0.0/16 gateway=172.30.70.5 comment="NSX VPC External IPs"
 ```
 
 **WebFig/WinBox Configuration**:
+
 1. Navigate to: IP → Routes
 2. Click: Add New (+)
 3. Configure:
@@ -96,6 +100,7 @@ traceroute 31.31.0.11
 4. Click: OK
 
 **Verification**:
+
 ```bash
 # On MikroTik
 /ip route print where dst-address=31.31.0.0/16
@@ -108,6 +113,7 @@ traceroute 31.31.0.11
 ### NSX T0 Gateway (transit-gw)
 
 **Existing Configuration** (already in place):
+
 - Static Route: `0.0.0.0/0 → 172.30.70.1`
 - Uplinks: 172.30.70.2, 172.30.70.3 on VLAN 70
 - VPC Gateway: 172.30.70.5 (handles VPC external IPs)
@@ -116,10 +122,12 @@ traceroute 31.31.0.11
 ### NSX VPC (tas-vpc)
 
 **External IP Pool**: Auto-assigned by VPC from available range
+
 - Ops Manager: 31.31.0.11 (auto-assigned)
 - Additional IPs available: 31.31.0.x range
 
 **VPC Gateway Firewall** (if connectivity still fails after routing):
+
 1. NSX UI → Networking → VPC → tas-vpc → Security
 2. Add Gateway Firewall Rule:
    - Name: `allow-opsman-external-access`
@@ -132,7 +140,7 @@ traceroute 31.31.0.11
 
 ### Successful Connection Path
 
-```
+```sh
 Laptop (192.168.2.12)
   │
   ├─► DNS: opsman.tas.vcf.lab → 31.31.0.11
@@ -158,7 +166,7 @@ Laptop (192.168.2.12)
 
 ### Return Path
 
-```
+```sh
 Ops Manager VM (172.20.0.10)
   │
   ├─ 1. Sends response to source IP (192.168.2.12)
@@ -215,6 +223,7 @@ nc -zv 31.31.0.11 443
 **Cause**: MikroTik route not active or needs restart
 
 **Fix**:
+
 ```bash
 # On MikroTik, disable and re-enable the route
 /ip route disable [find dst-address=31.31.0.0/16]
@@ -236,6 +245,7 @@ nc -zv 31.31.0.11 443
 **Cause**: TCP being blocked by firewall while ICMP allowed
 
 **Fix**:
+
 1. Check NSX VPC Gateway Firewall
 2. Check NSX Distributed Firewall (Security → Distributed Firewall)
 3. Verify SSH service running on VM: `ssh 172.30.0.11` then `ssh 172.20.0.10`
@@ -261,7 +271,7 @@ nc -zv 31.31.0.11 443
 
 Add to your local DNS or `/etc/hosts`:
 
-```
+```sh
 31.31.0.11    opsman.tas.vcf.lab opsman
 ```
 
@@ -269,7 +279,7 @@ Add to your local DNS or `/etc/hosts`:
 
 Add to `~/.ssh/config`:
 
-```
+```text
 Host opsman opsman.tas.vcf.lab
     Hostname 31.31.0.11
     User ubuntu
@@ -279,6 +289,7 @@ Host opsman opsman.tas.vcf.lab
 ```
 
 Then connect with:
+
 ```bash
 ssh opsman
 ```
@@ -287,7 +298,7 @@ ssh opsman
 
 After successful connectivity:
 
-1. **Access Ops Manager Web UI**: https://31.31.0.11
+1. **Access Ops Manager Web UI**: <https://31.31.0.11>
 2. **Complete Initial Setup**: Configure authentication and BOSH Director
 3. **Deploy TAS**: Use Ops Manager to deploy Tanzu Application Service
 4. **Configure DNS**: Add wildcard DNS for TAS apps domain
