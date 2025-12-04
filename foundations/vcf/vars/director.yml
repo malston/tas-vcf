@@ -57,12 +57,22 @@ nsxt_ca_cert: |
   HkwFLJgLRarHjVRIgPina/2Qcsk=
   -----END CERTIFICATE-----
 
-# Networks - Traditional NSX-T Infrastructure Segment
-# CRITICAL: Must use exact segment name (case-sensitive)
+# Networks - Traditional NSX-T Segments
+# CRITICAL: Must use exact segment names (case-sensitive)
 infrastructure_network_name: tas-Infrastructure
 infrastructure_cidr: 10.0.1.0/24
 infrastructure_gateway: 10.0.1.1
 infrastructure_reserved_ips: 10.0.1.1-10.0.1.10
+
+deployment_network_name: tas-Deployment
+deployment_cidr: 10.0.2.0/24
+deployment_gateway: 10.0.2.1
+deployment_reserved_ips: 10.0.2.1-10.0.2.10
+
+services_network_name: tas-Services
+services_cidr: 10.0.3.0/24
+services_gateway: 10.0.3.1
+services_reserved_ips: 10.0.3.1-10.0.3.10
 
 # DNS and NTP
 dns_servers: 192.168.10.2

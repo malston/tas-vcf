@@ -31,6 +31,26 @@ networks-configuration:
           availability_zone_names:
             - az1
             - az2
+    - name: tas-Deployment
+      subnets:
+        - iaas_identifier: ((deployment_network_name))
+          cidr: ((deployment_cidr))
+          gateway: ((deployment_gateway))
+          reserved_ip_ranges: ((deployment_reserved_ips))
+          dns: ((dns_servers))
+          availability_zone_names:
+            - az1
+            - az2
+    - name: tas-Services
+      subnets:
+        - iaas_identifier: ((services_network_name))
+          cidr: ((services_cidr))
+          gateway: ((services_gateway))
+          reserved_ip_ranges: ((services_reserved_ips))
+          dns: ((dns_servers))
+          availability_zone_names:
+            - az1
+            - az2
 
 properties-configuration:
   director_configuration:
