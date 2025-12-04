@@ -529,6 +529,64 @@ resource-config:
    - Verify all required properties set
    - Ensure resource config within limits
 
+## Deployment Issues & Resolutions
+
+This section documents issues encountered during deployment and their resolutions, serving as troubleshooting guidance for similar problems.
+
+### Missing NSX-T Load Balancer Pool Registration
+
+**Issue**: TAS smoke tests failed with `dial tcp 31.31.10.20:443: i/o timeout` when attempting to connect to `api.sys.tas.vcf.lab`.
+
+**Symptoms**:
+- DNS resolution works correctly (`api.sys.tas.vcf.lab` → `31.31.10.20`)
+- ICMP ping to VIP fails with "Time to live exceeded" (routing loop)
+- NSX-T shows load balancer virtual server as "deactivated"
+- NSX-T shows load balancer pool as "deactivated"
+- Gorouter VMs are running and healthy in BOSH
+
+**Root Cause**:
+The NSX-T load balancer pools were created by terraform, but the TAS tile configuration lacked the `nsxt.lb.server_pools` setting that tells BOSH to register router VMs to those pools. Without this configuration:
+1. Terraform created the NSX-T infrastructure (pools, virtual servers, VIPs)
+2. BOSH Director had NSX-T networking enabled
+3. TAS deployed gorouter VMs successfully
+4. **But**: Gorouters never registered to the NSX load balancer pool
+5. NSX automatically deactivated the pool and virtual server (no healthy members)
+6. Traffic to the VIP had nowhere to route
+
+**Resolution**:
+Add the NSX-T load balancer pool configuration to the router resource in `foundations/vcf/config/tas.yml`:
+
+```yaml
+resource-config:
+  router:
+    instances: automatic
+    instance_type:
+      id: automatic
+    nsxt:
+      lb:
+        server_pools:
+          - name: tas-gorouter-pool
+            port: 443
+          - name: tas-gorouter-pool
+            port: 80
+```
+
+After applying this configuration and redeploying TAS:
+1. BOSH registers gorouter VMs to the NSX load balancer pool
+2. NSX detects healthy pool members
+3. Pool and virtual server activate automatically
+4. Traffic flows correctly to `api.sys.tas.vcf.lab`
+
+**Lesson Learned**:
+NSX-T integration requires **three layers** of configuration:
+1. **NSX-T Infrastructure** (terraform): Create pools, virtual servers, VIPs
+2. **BOSH Director**: Enable NSX-T networking (`nsx_networking_enabled: true`)
+3. **TAS Tile**: Configure pool membership (`nsxt.lb.server_pools`) for router jobs
+
+Missing any layer results in non-functional load balancing, even though individual components appear healthy.
+
+**Reference**: Commit `ae2d4b0` - "Add NSX-T load balancer pool configuration for gorouters"
+
 ## References
 
 ### Official Documentation
