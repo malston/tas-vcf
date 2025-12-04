@@ -23,30 +23,10 @@ networks-configuration:
   networks:
     - name: infrastructure
       subnets:
-        - iaas_identifier: ((infrastructure_segment_name))
+        - iaas_identifier: ((infrastructure_network_name))
           cidr: ((infrastructure_cidr))
           gateway: ((infrastructure_gateway))
           reserved_ip_ranges: ((infrastructure_reserved_ips))
-          dns: ((dns_servers))
-          availability_zone_names:
-            - az1
-            - az2
-    - name: deployment
-      subnets:
-        - iaas_identifier: ((deployment_segment_name))
-          cidr: ((deployment_cidr))
-          gateway: ((deployment_gateway))
-          reserved_ip_ranges: ((deployment_reserved_ips))
-          dns: ((dns_servers))
-          availability_zone_names:
-            - az1
-            - az2
-    - name: services
-      subnets:
-        - iaas_identifier: ((services_segment_name))
-          cidr: ((services_cidr))
-          gateway: ((services_gateway))
-          reserved_ip_ranges: ((services_reserved_ips))
           dns: ((dns_servers))
           availability_zone_names:
             - az1
@@ -81,9 +61,7 @@ properties-configuration:
     generate_vm_passwords: true
 
 resource-configuration:
-  director:
-    internet_connected: false
-  compilation:
-    internet_connected: false
+  director: {}
+  compilation: {}
 
 vmextensions-configuration: []

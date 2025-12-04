@@ -1770,10 +1770,8 @@ properties-configuration:
     generate_vm_passwords: true
 
 resource-configuration:
-  director:
-    internet_connected: false
-  compilation:
-    internet_connected: false
+  director: {}
+  compilation: {}
 
 vmextensions-configuration: []
 ```
