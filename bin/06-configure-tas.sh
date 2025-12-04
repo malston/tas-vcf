@@ -24,14 +24,35 @@ opsman_decryption_passphrase=$(op read "op://Private/opsman.tas.vcf.lab/password
 opsman_hostname="opsman.tas.vcf.lab"
 nsxt_username="admin"
 
-# Generate CredHub encryption key if not exists
+# CredHub encryption key management
 credhub_key_file="${CUR_DIR}/../foundations/${FOUNDATION}/state/credhub-key.txt"
+
 if [[ ! -f "$credhub_key_file" ]]; then
-  echo "Generating CredHub encryption key..."
-  openssl rand -base64 32 > "$credhub_key_file"
-  chmod 600 "$credhub_key_file"
+  echo "=================================================================================================="
+  echo "WARNING: CredHub encryption key file does not exist: $credhub_key_file"
+  echo "=================================================================================================="
+  echo "Attempting to retrieve from 1Password..."
+
+  # Try to get from 1Password first
+  if credhub_key_from_1p=$(op read "op://Private/TAS VCF Lab - Credhub Encryption Key/password" 2>/dev/null); then
+    echo "✓ Retrieved CredHub key from 1Password"
+    echo "$credhub_key_from_1p" > "$credhub_key_file"
+    chmod 600 "$credhub_key_file"
+  else
+    echo "✗ Key not found in 1Password, generating new key..."
+    echo "  You will need to save this to 1Password: op://Private/TAS VCF Lab - Credhub Encryption Key"
+    openssl rand -base64 32 > "$credhub_key_file"
+    chmod 600 "$credhub_key_file"
+    echo ""
+    echo "NEW KEY GENERATED: $(cat "$credhub_key_file")"
+    echo "Save this to 1Password NOW before continuing!"
+    echo ""
+    read -p "Press Enter after saving to 1Password..."
+  fi
 fi
+
 credhub_encryption_key=$(cat "$credhub_key_file")
+echo "Using CredHub encryption key from: $credhub_key_file"
 
 # Get certificates from Terraform outputs
 cd "${CUR_DIR}/../terraform/certs"
