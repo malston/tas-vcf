@@ -294,6 +294,63 @@ Then connect with:
 ssh opsman
 ```
 
+## VPC vs Traditional NSX-T: Architectural Comparison
+
+### Key Discovery
+
+This deployment uses **NSX VPC**, but the routing challenge was discovering the **NSX VPC Gateway at 172.30.70.5**. This gateway handles both:
+- VPC external IPs (31.31.0.0/16)
+- NSX private transit networks (10.10.0.0/24)
+
+### Critical Lesson: Routing Requirements Are the Same
+
+**The fundamental routing requirement doesn't change between VPC and traditional NSX-T:**
+
+```
+Your Laptop → UniFi Router → MikroTik Router → NSX Gateway
+```
+
+Whether using VPC or traditional NSX-T, a **multi-tier router architecture** requires routes on **every router** in the path. The VPC vs NSX-T choice affects IP management and security models, but NOT the number of routing hops.
+
+### If You Had Used Traditional NSX-T
+
+Your existing Terraform configuration defines traditional NSX-T segments:
+
+| Component | Value |
+|-----------|-------|
+| Segment | tas-Infrastructure (10.0.1.0/24) |
+| T1 Gateway | tas-T1-Infrastructure |
+| NAT Rules | DNAT: 31.31.10.10 → 10.0.1.10<br>SNAT: 10.0.1.10 → 31.31.10.10 |
+
+**The same two-hop routing would be required:**
+- UniFi: 31.31.10.0/24 → 192.168.10.250
+- MikroTik: 31.31.10.0/24 → 172.30.70.5 (or .2/.3)
+
+### VPC Benefits (Why It's Still Valuable)
+
+1. **Simpler External IP Management**: Auto-assigned vs manual NAT rules
+2. **Modern Security Model**: VPC Gateway Firewall (cloud-like security groups)
+3. **Better Multi-Tenancy**: Built-in VPC isolation
+4. **Future-Proof**: VMware's strategic direction for NSX 4.x+
+5. **Kubernetes Native**: Better TKG/Tanzu integration
+
+### When to Use Each
+
+| Use NSX VPC | Use Traditional NSX-T |
+|-------------|----------------------|
+| New deployments | Existing NSX-T with Terraform |
+| Cloud-like networking model | Fine-grained NAT control |
+| Kubernetes workloads | Complex multi-tier routing |
+| Simpler IP management | Specific T0/T1 requirements |
+| VCF 5.x+ | Legacy NSX integration |
+
+### What VPC Doesn't Change
+
+- ❌ Number of routing hops
+- ❌ Router configuration complexity
+- ❌ Need for two-tier routing (UniFi + MikroTik)
+- ❌ Basic network connectivity path
+
 ## Next Steps
 
 After successful connectivity:
@@ -302,10 +359,11 @@ After successful connectivity:
 2. **Complete Initial Setup**: Configure authentication and BOSH Director
 3. **Deploy TAS**: Use Ops Manager to deploy Tanzu Application Service
 4. **Configure DNS**: Add wildcard DNS for TAS apps domain
-5. **Configure Load Balancers**: Set up NSX-T load balancers for TAS components
+5. **Configure Load Balancers**: Set up NSX load balancers for TAS components
 
 ## References
 
 - [NSX VPC Documentation](https://docs.vmware.com/en/VMware-NSX/index.html)
 - [VCF 9.0 VPC Setup Guide](https://williamlam.com/2025/07/ms-a2-vcf-9-0-lab-configuring-nsx-virtual-private-cloud-vpc.html)
 - [TAS on vSphere Documentation](https://docs.vmware.com/en/VMware-Tanzu-Application-Service/index.html)
+- [NSX VPC vs Traditional NSX-T](https://docs.vmware.com/en/VMware-NSX/4.1/administration/GUID-CE3E4674-32A8-4481-B8B6-98F28E67E0E7.html)
