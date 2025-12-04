@@ -299,6 +299,7 @@ ssh opsman
 ### Key Discovery
 
 This deployment uses **NSX VPC**, but the routing challenge was discovering the **NSX VPC Gateway at 172.30.70.5**. This gateway handles both:
+
 - VPC external IPs (31.31.0.0/16)
 - NSX private transit networks (10.10.0.0/24)
 
@@ -323,6 +324,7 @@ Your existing Terraform configuration defines traditional NSX-T segments:
 | NAT Rules | DNAT: 31.31.10.10 → 10.0.1.10<br>SNAT: 10.0.1.10 → 31.31.10.10 |
 
 **The same two-hop routing would be required:**
+
 - UniFi: 31.31.10.0/24 → 192.168.10.250
 - MikroTik: 31.31.10.0/24 → 172.30.70.5 (or .2/.3)
 
@@ -355,7 +357,7 @@ Your existing Terraform configuration defines traditional NSX-T segments:
 
 After successful connectivity:
 
-1. **Access Ops Manager Web UI**: <https://31.31.0.11>
+1. **Access Ops Manager Web UI**: <https://opsman.tas.vcf.lab>
 2. **Complete Initial Setup**: Configure authentication and BOSH Director
 3. **Deploy TAS**: Use Ops Manager to deploy Tanzu Application Service
 4. **Configure DNS**: Add wildcard DNS for TAS apps domain
