@@ -32,6 +32,10 @@ product-properties:
   .properties.container_networking_interface_plugin.silk.network_mtu:
     value: 1454
 
+  # MySQL monitoring
+  .mysql_monitor.recipient_email:
+    value: admin@tas.vcf.lab
+
   # Routing (NSX-T configured at BOSH Director level)
   .properties.gorouter_ssl_ciphers:
     value: ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384
