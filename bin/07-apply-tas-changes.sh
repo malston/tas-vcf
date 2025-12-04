@@ -52,8 +52,7 @@ echo "Starting deployment..."
 echo "This will take 30-60 minutes for Small Footprint TAS"
 echo ""
 
-om --env "$ENV_FILE" apply-changes \
-  --skip-deploy-products=pivotal-telemetry-om
+om --env "$ENV_FILE" apply-changes
 
 # Cleanup
 rm -f "$ENV_FILE"

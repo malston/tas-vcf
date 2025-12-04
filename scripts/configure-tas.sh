@@ -35,4 +35,4 @@ echo "TAS tile configured successfully!"
 # Show pending changes
 echo ""
 echo "Pending changes:"
-om --env "$ENV_FILE" pending-changes --format json | jq -r '.product_changes[] | "\(.action): \(.guid)"'
+om --env "$ENV_FILE" pending-changes
