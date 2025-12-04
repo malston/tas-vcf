@@ -36,7 +36,7 @@ om interpolate -c "${CUR_DIR}/../foundations/${FOUNDATION}/env/env.yml" \
 echo "=== Applying TAS Changes ==="
 echo ""
 echo "Pending changes:"
-om --env "$ENV_FILE" pending-changes --format json | jq -r '.product_changes[] | "\(.action): \(.guid)"'
+om --env "$ENV_FILE" pending-changes
 
 echo ""
 read -p "Proceed with deployment? (yes/no): " PROCEED
