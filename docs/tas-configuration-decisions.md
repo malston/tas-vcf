@@ -18,10 +18,10 @@ This document explains the decision-making process for determining configuration
    - Terraform state and outputs
    - Automation strategy
 
-3. **VMware Documentation**:
-   - [TAS for VMs Documentation](https://docs.vmware.com/en/VMware-Tanzu-Application-Service/6.0/tas-for-vms/concepts-overview.html)
-   - [NSX-T Integration Guide](https://docs.vmware.com/en/VMware-Tanzu-Application-Service/6.0/tas-for-vms/nsxt-index.html)
-   - [Small Footprint TAS Guide](https://docs.vmware.com/en/VMware-Tanzu-Application-Service/6.0/tas-for-vms/small-footprint.html)
+3. **Broadcom TechDocs**:
+   - [Configuring TAS for VMs](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/elastic-application-runtime/6-0/eart/toc-tas-install-features-index.html)
+   - [Deploying TAS with NSX-T Networking](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/elastic-application-runtime/6-0/eart/vsphere-nsx-t.html)
+   - [TAS for VMs Resource Requirements](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/6-0/tpcf/requirements.html)
 
 4. **Existing Infrastructure**:
    - Terraform outputs (`terraform/nsxt/`, `terraform/vsphere/`, `terraform/certs/`)
