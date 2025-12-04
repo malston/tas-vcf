@@ -294,21 +294,10 @@ properties-configuration:
 **Rationale**:
 - NSX-T load balancers and pools already configured via Terraform
 - BOSH Director NSX-T integration handles automatic VM registration with pools
-- **vSphere-specific**: `elb_names` property (AWS-specific) is not supported and causes errors
 - Load balancer pool membership managed via BOSH vm_extensions and NSX-T tags
 - No explicit load balancer configuration needed in TAS tile
 
 **Configuration**:
-**REMOVED from TAS tile** (causes error on vSphere):
-```yaml
-# ❌ DO NOT USE - AWS-specific, not supported on vSphere
-resource-config:
-  router:
-    elb_names:
-      - tas-gorouter-pool  # This causes: {"errors":{"elb_names":["is not supported on vsphere"]}}
-```
-
-**Actual Configuration**:
 - Load balancer pools created via Terraform in `terraform/nsxt/`
 - VMs automatically registered with pools via BOSH NSX-T integration
 - No tile-level configuration required
