@@ -41,6 +41,8 @@ product-properties:
     value: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384
   .properties.routing_disable_http:
     value: false
+  .properties.routing_tls_termination:
+    value: router
   .properties.routing_custom_ca_certificates:
     value: ((trusted_certificates))
 
