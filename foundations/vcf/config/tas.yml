@@ -1,7 +1,7 @@
 ---
 # TAS 6.0.6 Small Footprint Configuration for VCF 9
 
-product-name: srt
+product-name: cf
 product-properties:
   # Domains
   .cloud_controller.apps_domain:
