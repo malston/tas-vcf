@@ -94,6 +94,13 @@ resource-config:
     instances: automatic
     instance_type:
       id: automatic
+    nsxt:
+      lb:
+        server_pools:
+          - name: tas-gorouter-pool
+            port: 443
+          - name: tas-gorouter-pool
+            port: 80
   tcp_router:
     instances: 0
     instance_type:
