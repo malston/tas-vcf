@@ -17,9 +17,9 @@ product-properties:
           cert_pem: ((tas_system_cert_pem))
           private_key_pem: ((tas_system_key_pem))
 
-  .properties.credhub_key_encryption_passwords:
+  .properties.credhub_internal_provider_keys:
     value:
-      - name: default
+      - name: primary
         key:
           secret: ((credhub_encryption_key))
         primary: true
@@ -32,20 +32,7 @@ product-properties:
   .properties.container_networking_interface_plugin.silk.network_mtu:
     value: 1454
 
-  # NSX-T Integration
-  .properties.nsx_networking:
-    value: "enable"
-  .properties.nsx_networking.enable.nsx_address:
-    value: ((nsxt_host))
-  .properties.nsx_networking.enable.nsx_username:
-    value: ((nsxt_username))
-  .properties.nsx_networking.enable.nsx_password:
-    value:
-      secret: ((nsxt_password))
-  .properties.nsx_networking.enable.nsx_ca_certificate:
-    value: ((nsxt_ca_cert))
-
-  # Routing
+  # Routing (NSX-T configured at BOSH Director level)
   .properties.gorouter_ssl_ciphers:
     value: ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384
   .properties.routing_disable_http:
@@ -53,15 +40,11 @@ product-properties:
   .properties.routing_custom_ca_certificates:
     value: ((trusted_certificates))
 
-  # Diego
-  .properties.diego_cell_disk_capacity:
+  # Diego cell capacity
+  .diego_cell.executor_disk_capacity:
     value: 153600
-  .properties.diego_cell_memory_capacity:
+  .diego_cell.executor_memory_capacity:
     value: 61440
-
-  # Logging
-  .properties.system_logging:
-    value: disabled
 
   # UAA
   .uaa.service_provider_key_credentials:
