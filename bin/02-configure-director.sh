@@ -29,36 +29,39 @@ nsxt_username="admin"
 # Build trusted certificates bundle (vSphere CA + TAS CA)
 echo "Building trusted certificates bundle..."
 
-# vSphere Root CA (signs NSX-T Manager certificate)
-vsphere_ca="-----BEGIN CERTIFICATE-----
-MIIE8DCCA1igAwIBAgIJAO0HwBb0WuDzMA0GCSqGSIb3DQEBCwUAMIGTMQswCQYD
-VQQDDAJDQTEXMBUGCgmSJomT8ixkARkWB3ZzcGhlcmUxFTATBgoJkiaJk/IsZAEZ
-FgVsb2NhbDELMAkGA1UEBhMCVVMxEzARBgNVBAgMCkNhbGlmb3JuaWExFTATBgNV
-BAoMDHZjMDEudmNmLmxhYjEbMBkGA1UECwwSVk13YXJlIEVuZ2luZWVyaW5nMB4X
-DTI1MTEwOTIyMTIzN1oXDTM1MTEwNzIyMTIzN1owgZMxCzAJBgNVBAMMAkNBMRcw
-FQYKCZImiZPyLGQBGRYHdnNwaGVyZTEVMBMGCgmSJomT8ixkARkWBWxvY2FsMQsw
-CQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5pYTEVMBMGA1UECgwMdmMwMS52
-Y2YubGFiMRswGQYDVQQLDBJWTXdhcmUgRW5naW5lZXJpbmcwggGiMA0GCSqGSIb3
-DQEBAQUAA4IBjwAwggGKAoIBgQC18ooG02hUjpzawf5TcDM5QJH+dhbSdvC3iFiK
-dx43LY3atZCJmwxB7H7MQtPpGlD16UB03eXocIAX07VQULC+gKY7kzutjkqgrtN2
-UURqN/cSCpfv1IhYvDJd8HHW+uZl2oiCJigSd390V516SYQvyOX75vPnlV1PYrEM
-BP/UzfZ4oVU98DX0T+le/NWngvZntZNqyTfZZ8nmZySSjdN7D0UMD7y4kHVFrBoA
-mrYh4UPiNNJwaubr8tslhBwS++SJXQLSWPFC/0LtfEoZtpwTnf+lkb/XhWnDOnQs
-WfBERZ58WI3XxiHDNIgBAC5SYKbQnAu5U8NdGCp0lhIoXjhbm7ZO7QED+1U349ZP
-RU9lVp5Y//aHnkr8HbNcc4ZIpDM4K5/4ugI6zZ9+1xYZv3xNnLG5h1BH9N4ECKrC
-mQsyVE+moVBVbV/6Hgf8oaOmqeQdTw09/bNNHuJgB/NXa70u5fVhB9n1M79i7Mbl
-biJgLHe8Oid3zKOrYyf9Xfg8eTcCAwEAAaNFMEMwHQYDVR0OBBYEFH+kaZJ0wInR
-1Ug6sMPaSAGcz+9rMA4GA1UdDwEB/wQEAwIBBjASBgNVHRMBAf8ECDAGAQH/AgEA
-MA0GCSqGSIb3DQEBCwUAA4IBgQCITS7dTnU6FtwXfgs5xXcKiIcGf8RftrHqJSOI
-XrXxWuxgJnLmq5C3m+ePm1f5yzktmNxBj9IVfpcKbpFZ+2ieopyfwYYt19RFI5Ly
-u2p4+IlJxA9l18h+yB071vLGBf3spfcw4BFQJbTfLfovxe0vt3aU7Im0ubwJ9sUu
-W+V7A7ijjEBKmdmmwPZkZRw3HpTZd/3tS37X3idNkA3z4nQWTgatSjapxKquW9sF
-Uw6IyrOIPQWEZJHJ7i0U7TiJW3PWiHx+ihuONoIREuDqW/IppM22aQ6JcOjjXks8
-MKDD+/soC6oKICz+T86NidAX5DlPghSQiXkalRuayt/7h9FO/mSWz7LrHfq9rRz/
-NAurSgbT5Ou1D20jUIu3cUJVfu5eLwuG7rWF0BdZI6XHhRmtJdAiy1k9rws8L4+N
-2u1B1ezlcbZSuOlqSa7AeMeqYiyZGD0MTFeNyE7g5pBUfQCOtPChQm7TduHdEgR5
-HkwFLJgLRarHjVRIgPina/2Qcsk=
------END CERTIFICATE-----"
+# Fetch NSX-T Manager certificate
+# echo "Fetching NSX-T Manager certificate..."
+# nsx_host="nsx01.vcf.lab"
+
+# # Get the certificate chain and extract the root CA (last certificate in chain)
+# nsx_ca=$(openssl s_client -connect "${nsx_host}:443" -showcerts < /dev/null 2>/dev/null | \
+#   awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/ {print} /END CERTIFICATE/ {cert=cert $0 "\n"; next} {cert=cert $0 "\n"}' | \
+#   awk 'BEGIN{RS="-----END CERTIFICATE-----\n"; ORS=""} {cert=$0 "-----END CERTIFICATE-----\n"} END{print cert}')
+
+# if [[ -z "$nsx_ca" ]]; then
+#   echo "ERROR: Failed to fetch NSX-T Manager certificate from ${nsx_host}"
+#   echo "Please check network connectivity and NSX-T Manager availability"
+#   exit 1
+# fi
+
+# echo "✓ Successfully retrieved NSX-T Manager certificate from ${nsx_host}"
+
+# Fetch vSphere Root CA from vCenter (signs NSX-T Manager certificate)
+echo "Fetching vSphere Root CA from vCenter..."
+vcenter_host="vc01.vcf.lab"
+
+# Get the certificate chain and extract the root CA (last certificate in chain)
+vsphere_ca=$(openssl s_client -connect "${vcenter_host}:443" -showcerts < /dev/null 2>/dev/null | \
+  awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/ {print} /END CERTIFICATE/ {cert=cert $0 "\n"; next} {cert=cert $0 "\n"}' | \
+  awk 'BEGIN{RS="-----END CERTIFICATE-----\n"; ORS=""} {cert=$0 "-----END CERTIFICATE-----\n"} END{print cert}')
+
+if [[ -z "$vsphere_ca" ]]; then
+  echo "ERROR: Failed to fetch vSphere Root CA from ${vcenter_host}"
+  echo "Please check network connectivity and vCenter availability"
+  exit 1
+fi
+
+echo "✓ Successfully retrieved vSphere Root CA from ${vcenter_host}"
 
 # Get TAS Homelab CA from Terraform
 cd "${CUR_DIR}/../terraform/certs"
