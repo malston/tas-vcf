@@ -90,6 +90,11 @@ resource-config:
     instances: automatic
     instance_type:
       id: automatic
+    nsxt:
+      lb:
+        server_pools:
+          - name: tas-ssh-pool
+            port: 2222
   database:
     instances: automatic
     persistent_disk:
@@ -109,6 +114,11 @@ resource-config:
     instances: 0
     instance_type:
       id: automatic
+    nsxt:
+      lb:
+        server_pools:
+          - name: tas-tcp-router-pool
+            port: 1024
 
 errand-config:
   smoke_tests:
