@@ -523,6 +523,161 @@ resource-config:
 - Restrict egress to specific services
 - Use space-scoped ASGs for multi-tenancy
 
+### 11. Load Balancer and TLS Termination Architecture
+
+#### Decision: TCP Passthrough with TLS Termination at Gorouter
+**Rationale**:
+- NSX-T load balancer configured for Layer 4 TCP passthrough (not TLS termination)
+- TLS termination happens at the gorouter, not at the load balancer
+- Provides flexibility for multiple certificates via Server Name Indication (SNI)
+- Simplifies load balancer configuration (no certificate management at LB layer)
+- Allows gorouter to see TLS SNI hostname for routing decisions
+
+**Configuration**:
+
+**NSX-T Load Balancer** (`terraform/nsxt/load_balancer.tf`):
+```terraform
+# Fast TCP Application Profile (TCP passthrough, no TLS termination)
+resource "nsxt_policy_lb_fast_tcp_application_profile" "tcp_profile" {
+  display_name  = "tas-tcp-profile"
+  close_timeout = 8
+  idle_timeout  = 1800
+}
+
+# HTTP Virtual Server (port 80)
+resource "nsxt_policy_lb_virtual_server" "web_http" {
+  ports                     = ["80"]
+  default_pool_member_ports = ["80"]
+  application_profile_path  = nsxt_policy_lb_fast_tcp_application_profile.tcp_profile.path
+  pool_path                 = nsxt_policy_lb_pool.gorouter_pool.path
+}
+
+# HTTPS Virtual Server (port 443)
+resource "nsxt_policy_lb_virtual_server" "web_https" {
+  ports                     = ["443"]
+  default_pool_member_ports = ["443"]
+  application_profile_path  = nsxt_policy_lb_fast_tcp_application_profile.tcp_profile.path
+  pool_path                 = nsxt_policy_lb_pool.gorouter_pool.path
+}
+```
+
+**TAS Tile Configuration** (`foundations/vcf/config/tas.yml`):
+```yaml
+# TLS termination at gorouter (not load balancer)
+.properties.routing_tls_termination:
+  value: router
+
+# Multiple certificates for SNI
+.properties.networking_poe_ssl_certs:
+  value:
+    - name: system
+      certificate:
+        cert_pem: ((tas_system_cert_pem))
+        private_key_pem: ((tas_system_key_pem))
+    - name: apps
+      certificate:
+        cert_pem: ((tas_apps_cert_pem))
+        private_key_pem: ((tas_apps_key_pem))
+
+# Router pool registration (HTTPS only)
+resource-config:
+  router:
+    instances: automatic
+    instance_type:
+      id: automatic
+    nsxt:
+      lb:
+        server_pools:
+          - name: tas-gorouter-pool
+            port: 443
+```
+
+#### Load Balancer Architecture Explanation
+
+**Virtual Servers and Pool Members**:
+
+| Frontend (Client) | Virtual Server | VIP:Port | Backend (Gorouter) | Pool Member | Traffic Type |
+|-------------------|----------------|----------|--------------------|-------------|--------------|
+| HTTP request | `tas-web-http-vs` | 31.31.10.20:80 | gorouter:80 | `10.0.2.16:80` | Plain HTTP |
+| HTTPS request | `tas-web-https-vs` | 31.31.10.20:443 | gorouter:443 | `10.0.2.16:443` | Encrypted TLS |
+
+**Why Two Virtual Servers but One Pool Member in TAS Config?**
+
+1. **Terraform Creates Infrastructure**:
+   - Two virtual servers (HTTP and HTTPS) with correct `default_pool_member_ports`
+   - One pool (`tas-gorouter-pool`) that both virtual servers use
+   - Virtual servers automatically route to correct backend port
+
+2. **TAS Registers Only HTTPS**:
+   - Only register port 443 in TAS tile configuration
+   - HTTP virtual server still works because Terraform configured it with `default_pool_member_ports = ["80"]`
+   - Don't register port 80 to avoid creating duplicate pool members
+
+3. **Why Not Register Both Ports?**:
+   - Registering both creates TWO pool members for the same VM: `VM:80` and `VM:443`
+   - Load balancer round-robins between ALL members
+   - HTTPS traffic could randomly go to HTTP listener → **Connection failure**
+   - See: `docs/deployment-issues-resolutions.md` - "Intermittent HTTP/HTTPS Routing Failures"
+
+**TLS Termination Flow**:
+
+```
+Client                   NSX-T LB                Gorouter                    App
+======                   ========                ========                    ===
+HTTPS request         →  TCP passthrough      →  TLS termination          →  HTTP
+(encrypted)              (port 443)              (decrypt + route)           (plain)
+                         No certificate          Multiple certs via SNI
+                         inspection             Selects cert based on
+                                                hostname in TLS handshake
+```
+
+**Certificate Selection via SNI**:
+
+When a client connects to `https://app.apps.tas.vcf.lab`:
+
+1. **TLS Handshake**: Client sends SNI hostname: `app.apps.tas.vcf.lab`
+2. **Load Balancer**: Passes encrypted TLS traffic to gorouter (TCP passthrough)
+3. **Gorouter**:
+   - Receives TLS handshake with SNI hostname
+   - Matches SNI against configured certificates:
+     - System cert covers: `*.sys.tas.vcf.lab`, `*.login.sys.tas.vcf.lab`, `*.uaa.sys.tas.vcf.lab`
+     - Apps cert covers: `*.apps.tas.vcf.lab`
+   - Selects apps cert (matches `*.apps.tas.vcf.lab`)
+   - Completes TLS handshake with client
+   - Decrypts HTTPS request
+   - Routes HTTP request to backend app
+
+**Alternative Considered**:
+- **TLS Termination at Load Balancer** - Rejected because:
+  - Requires managing certificates at load balancer layer
+  - More complex configuration (certificate uploads to NSX-T)
+  - Loses SNI visibility for routing decisions
+  - Can't easily support multiple certificates without additional virtual servers
+  - Standard Cloud Foundry architecture uses router-level TLS termination
+
+**Configuration Trade-offs**:
+
+| Aspect | TCP Passthrough (Chosen) | TLS Termination at LB |
+|--------|-------------------------|----------------------|
+| Certificate Management | Gorouter only (via BOSH) | NSX-T + Gorouter |
+| SNI Support | Native (multiple certs) | Complex (multiple VIPs or virtual servers) |
+| TLS Version Control | Gorouter configuration | Load balancer configuration |
+| Cipher Suite Control | Gorouter configuration | Load balancer configuration |
+| TLS Offload | No (gorouter does work) | Yes (CPU savings on router VMs) |
+| Routing Flexibility | Full SNI visibility | Limited (encrypted hostname) |
+
+**Operational Benefits**:
+- Simpler certificate rotation (only update gorouter certificates)
+- Standard Cloud Foundry deployment pattern
+- Gorouter can make intelligent routing decisions based on TLS SNI
+- No load balancer reconfiguration needed for certificate changes
+
+**Security Considerations**:
+- TLS traffic encrypted from client to gorouter (end-to-end encryption)
+- Load balancer can't inspect TLS traffic (no deep packet inspection)
+- Certificates managed through BOSH CredHub (secure credential storage)
+- Multiple certificates reduce blast radius (apps cert separate from system cert)
+
 ## Configuration Validation Strategy
 
 ### Pre-Configuration Validation

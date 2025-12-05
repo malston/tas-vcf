@@ -58,9 +58,11 @@ echo "Using CredHub encryption key from: $credhub_key_file"
 cd "${CUR_DIR}/../terraform/certs"
 tas_system_cert=$(terraform output -raw tas_system_cert 2>/dev/null || echo "")
 tas_system_key=$(terraform output -raw tas_system_key 2>/dev/null || echo "")
+tas_apps_cert=$(terraform output -raw tas_apps_cert 2>/dev/null || echo "")
+tas_apps_key=$(terraform output -raw tas_apps_key 2>/dev/null || echo "")
 ca_cert=$(terraform output -raw ca_cert 2>/dev/null || echo "")
 
-if [[ -z "$tas_system_cert" ]]; then
+if [[ -z "$tas_system_cert" ]] || [[ -z "$tas_apps_cert" ]]; then
   echo "ERROR: Certificates not found. Run: cd terraform/certs && terraform apply"
   exit 1
 fi
@@ -74,8 +76,8 @@ om interpolate -c "${CUR_DIR}/../foundations/${FOUNDATION}/vars/tas.yml" \
   --var="nsxt_password=$nsxt_password" \
   --var="tas_system_cert_pem=$tas_system_cert" \
   --var="tas_system_key_pem=$tas_system_key" \
-  --var="tas_apps_cert_pem=$tas_system_cert" \
-  --var="tas_apps_key_pem=$tas_system_key" \
+  --var="tas_apps_cert_pem=$tas_apps_cert" \
+  --var="tas_apps_key_pem=$tas_apps_key" \
   --var="uaa_service_provider_cert=$tas_system_cert" \
   --var="uaa_service_provider_key=$tas_system_key" \
   --var="trusted_certificates=$ca_cert" \

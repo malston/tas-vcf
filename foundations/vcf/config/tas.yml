@@ -12,10 +12,14 @@ product-properties:
   # Certificates
   .properties.networking_poe_ssl_certs:
     value:
-      - name: default
+      - name: system
         certificate:
           cert_pem: ((tas_system_cert_pem))
           private_key_pem: ((tas_system_key_pem))
+      - name: apps
+        certificate:
+          cert_pem: ((tas_apps_cert_pem))
+          private_key_pem: ((tas_apps_key_pem))
 
   .properties.credhub_internal_provider_keys:
     value:
