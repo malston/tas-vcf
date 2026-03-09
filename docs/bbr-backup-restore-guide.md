@@ -46,6 +46,27 @@ The machine running these scripts must be able to:
 1. Reach Ops Manager on port 443 (for credential retrieval)
 2. Reach the BOSH Director on port 22 (for BBR SSH), either directly or through the `BOSH_ALL_PROXY` SSH tunnel
 
+### Long-Running Operations
+
+BBR backup and restore can take a long time to complete. If you are running these scripts over SSH, use `nohup`, `screen`, or `tmux` so the operation survives a dropped connection.
+
+Using `nohup`:
+
+```bash
+nohup ./bbr-backup-director.sh > backup.log 2>&1 &
+tail -f backup.log
+```
+
+Using `tmux`:
+
+```bash
+tmux new -s bbr
+./bbr-backup-director.sh
+# Detach with Ctrl-b d, reattach later with: tmux attach -t bbr
+```
+
+This is especially important for restores -- a partially completed restore leaves the director in an inconsistent state.
+
 ## Backing Up the BOSH Director
 
 Script: [`bbr-backup-director.sh`](../scripts/bbr-backup-director.sh)
