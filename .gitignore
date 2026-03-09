@@ -1,6 +1,7 @@
 # Claude Code local settings
 .claude/settings.local.json
 .claude/conversation-*
+.claude/*.md
 
 # Logs
 logs/
@@ -32,3 +33,6 @@ terraform/certs/generated/
 # Platform Automation state
 foundations/*/state/*.yml
 !foundations/*/state/.gitkeep
+
+# Backups
+backups/
