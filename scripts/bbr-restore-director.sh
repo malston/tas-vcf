@@ -111,6 +111,7 @@ validate_artifact() {
     fi
 
     print_success "Artifact: $ARTIFACT_PATH"
+    # shellcheck disable=SC2012
     print_info "Size: $(ls -lh "$ARTIFACT_PATH" | awk '{print $5}')"
 }
 

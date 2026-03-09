@@ -127,11 +127,13 @@ run_backup() {
     pushd "$ARTIFACT_DIR" >/dev/null
 
     local dirs_before
+    # shellcheck disable=SC2012
     dirs_before=$(ls -d -- */ 2>/dev/null || true)
 
     bbr "${bbr_args[@]}" backup
 
     local backup_dir
+    # shellcheck disable=SC2012
     backup_dir=$(comm -23 <(ls -d -- */ | sort) <(echo "$dirs_before" | sort))
 
     local dir_count
