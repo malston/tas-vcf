@@ -48,6 +48,8 @@ The machine running these scripts must be able to:
 
 ## Backing Up the BOSH Director
 
+Script: [`bbr-backup-director.sh`](../scripts/bbr-backup-director.sh)
+
 ### Usage
 
 ```bash
@@ -86,6 +88,8 @@ aws s3 cp ./backups/director/director-backup_2026-03-06-12-00-00.tar \
 ```
 
 ## Restoring the BOSH Director
+
+Script: [`bbr-restore-director.sh`](../scripts/bbr-restore-director.sh)
 
 ### Usage
 
