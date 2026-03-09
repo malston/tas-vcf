@@ -144,7 +144,7 @@ fetch_bbr_credentials() {
     fi
 
     BBR_SSH_KEY_PATH=$(mktemp)
-    echo "$BBR_SSH_KEY" > "$BBR_SSH_KEY_PATH"
+    printf '%s\n' "$BBR_SSH_KEY" > "$BBR_SSH_KEY_PATH"
     chmod 600 "$BBR_SSH_KEY_PATH"
 
     print_success "BBR SSH user: $BBR_SSH_USER"
@@ -182,12 +182,28 @@ run_restore() {
     print_info "Starting restore..."
 
     pushd "$RESTORE_DIR" >/dev/null
+
+    local dirs
+    dirs=$(ls -d -- */ 2>/dev/null || true)
+    local dir_count
+    dir_count=$(echo "$dirs" | grep -c . || true)
+
+    if [[ $dir_count -eq 0 ]]; then
+        print_error "No directories found in extracted artifact"
+        popd >/dev/null
+        exit 1
+    elif [[ $dir_count -gt 1 ]]; then
+        print_error "Expected one directory in artifact, found $dir_count"
+        popd >/dev/null
+        exit 1
+    fi
+
     bbr director \
         --host "$DIRECTOR_HOST" \
         --username "$BBR_SSH_USER" \
         --private-key-path "$BBR_SSH_KEY_PATH" \
         restore \
-        --artifact-path "$(ls -d -- */)"
+        --artifact-path "$dirs"
     popd >/dev/null
 
     print_success "Restore completed"
@@ -196,7 +212,7 @@ run_restore() {
 cleanup() {
     local exit_code=$?
 
-    if [[ $exit_code -ne 0 && -n "${DIRECTOR_HOST:-}" && -n "${BBR_SSH_USER:-}" ]]; then
+    if [[ $exit_code -ne 0 && -n "${DIRECTOR_HOST:-}" && -n "${BBR_SSH_USER:-}" && -n "${BBR_SSH_KEY_PATH:-}" ]]; then
         print_error "Restore failed. Running cleanup..."
         bbr director \
             --host "$DIRECTOR_HOST" \
@@ -221,6 +237,10 @@ main() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --artifact-url)
+                if [[ $# -lt 2 || -z "${2:-}" ]]; then
+                    print_error "--artifact-url requires a URL argument"
+                    usage
+                fi
                 ARTIFACT_URL="$2"
                 shift 2
                 ;;

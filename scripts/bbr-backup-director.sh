@@ -87,7 +87,7 @@ fetch_bbr_credentials() {
     fi
 
     BBR_SSH_KEY_PATH=$(mktemp)
-    echo "$BBR_SSH_KEY" > "$BBR_SSH_KEY_PATH"
+    printf '%s\n' "$BBR_SSH_KEY" > "$BBR_SSH_KEY_PATH"
     chmod 600 "$BBR_SSH_KEY_PATH"
 
     print_success "BBR SSH user: $BBR_SSH_USER"
@@ -125,10 +125,26 @@ run_backup() {
     print_info "Starting backup..."
 
     pushd "$ARTIFACT_DIR" >/dev/null
+
+    local dirs_before
+    dirs_before=$(ls -d -- */ 2>/dev/null || true)
+
     bbr "${bbr_args[@]}" backup
 
+    local backup_dir
+    backup_dir=$(comm -23 <(ls -d -- */ | sort) <(echo "$dirs_before" | sort))
+
+    local dir_count
+    dir_count=$(echo "$backup_dir" | grep -c . || true)
+
+    if [[ $dir_count -ne 1 ]]; then
+        print_error "Expected exactly one new backup directory, found $dir_count"
+        popd >/dev/null
+        exit 1
+    fi
+
     local artifact_name="director-backup_${current_date}.tar"
-    tar -cvf "$artifact_name" --remove-files -- */
+    tar -cvf "$artifact_name" --remove-files -- "$backup_dir"
     print_success "Backup artifact: $ARTIFACT_DIR/$artifact_name"
     ls -lh "$artifact_name"
     popd >/dev/null
@@ -137,7 +153,7 @@ run_backup() {
 cleanup() {
     local exit_code=$?
 
-    if [[ $exit_code -ne 0 && -n "${DIRECTOR_HOST:-}" && -n "${BBR_SSH_USER:-}" ]]; then
+    if [[ $exit_code -ne 0 && -n "${DIRECTOR_HOST:-}" && -n "${BBR_SSH_USER:-}" && -n "${BBR_SSH_KEY_PATH:-}" ]]; then
         print_error "Backup failed. Running cleanup..."
         pushd "$ARTIFACT_DIR" >/dev/null
         bbr director \
