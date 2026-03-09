@@ -107,7 +107,7 @@ Deletes the tar file after extraction to free disk space. Peak disk usage is sti
 ./bbr-restore-director.sh --delete-artifact /path/to/director-backup.tar
 ```
 
-**Mode 3: Stream from S3 (recommended for limited disk space)**
+**Mode 3: Stream from S3**
 
 Streams the tar directly from S3 and extracts it without ever writing the tar to disk. Disk usage is only the extracted contents (roughly 1x the tar size). Requires the `aws` CLI with valid credentials.
 
@@ -121,12 +121,9 @@ Streams the tar directly from S3 and extracts it without ever writing the tar to
 | ------------------- | -------------------- | -------------------- |
 | Default             | ~2x backup size      | Plenty of disk space |
 | `--delete-artifact` | ~2x briefly, then 1x | Moderate disk space  |
-| `--artifact-url`    | ~1x backup size      | Limited disk space   |
+| `--artifact-url`    | ~1x backup size      | S3 access available  |
 
-For example, with a 67 GB backup:
-
-- Default mode needs ~134 GB
-- `--artifact-url` mode needs ~67 GB
+If the Ops Manager VM does not have enough space, attach an extra disk before running the restore. See [Attaching Extra Disk for Restore](#attaching-extra-disk-for-restore-vsphere) below.
 
 ### What It Does
 
@@ -160,11 +157,12 @@ bosh -d <deployment-name> cloud-check
 
 ## Attaching Extra Disk for Restore (vSphere)
 
-If the machine running the restore does not have enough disk space, you can attach a temporary disk in vSphere and mount it.
+The Ops Manager VM typically does not have enough disk space for both the backup tar and the extracted contents. The recommended approach is to attach a temporary disk to the Ops Manager VM in vSphere before running backup or restore operations.
 
 ### Attach and Mount
 
-After adding the disk to the VM in vSphere:
+1. In vSphere, add a new hard disk to the Ops Manager VM (size it to at least 2x your expected backup size)
+2. SSH into the Ops Manager VM and detect the new disk:
 
 ```bash
 # Detect the new disk
@@ -175,21 +173,29 @@ lsblk
 
 # Create filesystem and mount
 sudo mkfs.ext4 /dev/sdb
-sudo mkdir -p /mnt/bbr-restore
-sudo mount /dev/sdb /mnt/bbr-restore
+sudo mkdir -p /mnt/bbr
+sudo mount /dev/sdb /mnt/bbr
 ```
 
-Then set `TMPDIR` so the restore script extracts to the mounted disk:
+### Run Backup or Restore on the Mounted Disk
+
+For backups, point `BACKUP_DIR` at the mounted disk:
 
 ```bash
-export TMPDIR=/mnt/bbr-restore
-./bbr-restore-director.sh --artifact-url s3://your-bucket/bbr-backups/director-backup.tar
+BACKUP_DIR=/mnt/bbr ./bbr-backup-director.sh
 ```
 
-### Detach After Restore
+For restores, set `TMPDIR` so the restore script extracts to the mounted disk:
 
 ```bash
-sudo umount /mnt/bbr-restore
+export TMPDIR=/mnt/bbr
+./bbr-restore-director.sh /mnt/bbr/director-backup.tar
+```
+
+### Detach After Backup or Restore
+
+```bash
+sudo umount /mnt/bbr
 sudo sync
 echo 1 | sudo tee /sys/block/sdb/device/delete
 ```

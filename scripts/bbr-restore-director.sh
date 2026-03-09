@@ -105,7 +105,7 @@ validate_artifact() {
         exit 1
     fi
 
-    if ! tar -tf "$ARTIFACT_PATH" &>/dev/null; then
+    if ! tar -tf "$ARTIFACT_PATH" >/dev/null; then
         print_error "Invalid tar file: $ARTIFACT_PATH"
         exit 1
     fi
@@ -120,6 +120,13 @@ fetch_bbr_credentials() {
 
     local creds_json
     creds_json=$(om curl -s -p /api/v0/deployed/director/credentials/bbr_ssh_credentials)
+
+    if echo "$creds_json" | jq -e '.errors' &>/dev/null; then
+        local err_msg
+        err_msg=$(echo "$creds_json" | jq -r '.errors[0]')
+        print_error "Ops Manager API error: $err_msg"
+        exit 1
+    fi
 
     local cred_type
     cred_type=$(echo "$creds_json" | jq -r '.credential.type')
@@ -138,6 +145,11 @@ fetch_bbr_credentials() {
             exit 1
             ;;
     esac
+
+    if [[ -z "$BBR_SSH_USER" || "$BBR_SSH_USER" == "null" ]]; then
+        print_error "Failed to determine BBR SSH username from Ops Manager credentials"
+        exit 1
+    fi
 
     if [[ -z "$BBR_SSH_KEY" || "$BBR_SSH_KEY" == "null" ]]; then
         print_error "Failed to fetch BBR SSH private key from Ops Manager"
@@ -187,7 +199,7 @@ run_restore() {
     local dirs
     dirs=$(ls -d -- */ 2>/dev/null || true)
     local dir_count
-    dir_count=$(echo "$dirs" | grep -c . || true)
+    dir_count=$(echo "$dirs" | grep -c . || echo 0)
 
     if [[ $dir_count -eq 0 ]]; then
         print_error "No directories found in extracted artifact"
@@ -204,7 +216,7 @@ run_restore() {
         --username "$BBR_SSH_USER" \
         --private-key-path "$BBR_SSH_KEY_PATH" \
         restore \
-        --artifact-path "$dirs"
+        --artifact-path "${dirs%/}"
     popd >/dev/null
 
     print_success "Restore completed"
@@ -215,11 +227,14 @@ cleanup() {
 
     if [[ $exit_code -ne 0 && -n "${DIRECTOR_HOST:-}" && -n "${BBR_SSH_USER:-}" && -n "${BBR_SSH_KEY_PATH:-}" ]]; then
         print_error "Restore failed. Running cleanup..."
-        bbr director \
+        if ! bbr director \
             --host "$DIRECTOR_HOST" \
             --username "$BBR_SSH_USER" \
             --private-key-path "$BBR_SSH_KEY_PATH" \
-            restore-cleanup || true
+            restore-cleanup; then
+            print_error "BBR cleanup also failed. Director may have a stale lock."
+            print_error "Run manually: bbr director --host $DIRECTOR_HOST --username $BBR_SSH_USER --private-key-path <key> restore-cleanup"
+        fi
     fi
 
     if [[ -n "${RESTORE_DIR:-}" && -d "${RESTORE_DIR:-}" ]]; then
