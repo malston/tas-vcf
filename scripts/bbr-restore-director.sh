@@ -91,7 +91,7 @@ validate_prerequisites() {
 }
 
 resolve_directory_artifact() {
-    local dir="$1"
+    local dir="${1%/}"
 
     # Look for tar files in the directory (most recent first)
     local latest_tar
