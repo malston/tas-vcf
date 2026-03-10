@@ -19,6 +19,7 @@ print_error() { echo -e "${RED}!!${NC} $1"; }
 DELETE_ARTIFACT=false
 ARTIFACT_URL=""
 ARTIFACT_IS_DIR=false
+SKIP_CONFIRM=false
 
 usage() {
     echo "Usage: $0 [options] <backup-artifact>"
@@ -38,6 +39,7 @@ usage() {
     echo "                         Supports any URL that 'aws s3 cp' accepts."
     echo "  --delete-artifact      Delete the local tar file after extraction to free disk space."
     echo "                         Use when disk is too small to hold both the tar and extracted contents."
+    echo "  -y, --yes              Skip the confirmation prompt (for non-interactive use)."
     echo ""
     echo "Environment variables (set via .envrc):"
     echo "  BOSH_ENVIRONMENT       BOSH Director URL"
@@ -328,6 +330,10 @@ main() {
                 DELETE_ARTIFACT=true
                 shift
                 ;;
+            -y|--yes)
+                SKIP_CONFIRM=true
+                shift
+                ;;
             -h|--help)
                 usage
                 ;;
@@ -359,10 +365,14 @@ main() {
     print_info "Source: $source"
     print_info "The current director state will be overwritten."
     echo ""
-    read -r -p "Are you sure you want to proceed? (yes/no): " confirm
-    if [[ "$confirm" != "yes" ]]; then
-        print_info "Restore cancelled."
-        exit 0
+    if [[ "$SKIP_CONFIRM" == true ]]; then
+        print_info "Skipping confirmation (--yes)"
+    else
+        read -r -p "Are you sure you want to proceed? (yes/no): " confirm
+        if [[ "$confirm" != "yes" ]]; then
+            print_info "Restore cancelled."
+            exit 0
+        fi
     fi
 
     validate_prerequisites
