@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ABOUTME: Restores the BOSH Director from a BBR backup artifact.
-# ABOUTME: Fetches BBR SSH credentials from Ops Manager and restores from a specified backup tar.
+# ABOUTME: Accepts a tar file, S3 URL, or backup directory (as produced by bbr-backup-director.sh).
 
 set -euo pipefail
 
@@ -18,15 +18,19 @@ print_error() { echo -e "${RED}!!${NC} $1"; }
 
 DELETE_ARTIFACT=false
 ARTIFACT_URL=""
+ARTIFACT_IS_DIR=false
 
 usage() {
-    echo "Usage: $0 [options] <backup-artifact.tar>"
+    echo "Usage: $0 [options] <backup-artifact>"
     echo "       $0 --artifact-url <s3-url>"
     echo ""
     echo "Restores a BOSH Director from a BBR backup artifact."
     echo ""
     echo "Arguments:"
-    echo "  backup-artifact.tar    Path to a local backup tar file"
+    echo "  backup-artifact        Path to a backup tar file or a backup directory."
+    echo "                         If a directory is given, the most recent tar inside it"
+    echo "                         is used. If the directory contains a BBR artifact"
+    echo "                         (no tar files), it is used directly."
     echo ""
     echo "Options:"
     echo "  --artifact-url URL     Stream and extract a tar directly from S3 without saving"
@@ -86,6 +90,46 @@ validate_prerequisites() {
     print_success "All prerequisites met"
 }
 
+resolve_directory_artifact() {
+    local dir="$1"
+
+    # Look for tar files in the directory (most recent first)
+    local latest_tar
+    # shellcheck disable=SC2012
+    latest_tar=$(ls -t "$dir"/*.tar 2>/dev/null | head -1 || true)
+
+    if [[ -n "$latest_tar" ]]; then
+        ARTIFACT_PATH="$latest_tar"
+        print_info "Found tar in directory: $ARTIFACT_PATH"
+        return
+    fi
+
+    # No tar files -- check if the directory itself is a BBR artifact
+    # (BBR artifact directories contain metadata and backup blobs)
+    if ls "$dir"/metadata 2>/dev/null | grep -q . 2>/dev/null; then
+        ARTIFACT_IS_DIR=true
+        ARTIFACT_PATH="$dir"
+        print_info "Using directory as BBR artifact: $ARTIFACT_PATH"
+        return
+    fi
+
+    # Check for a single subdirectory that might be the BBR artifact
+    local subdirs
+    subdirs=$(ls -d "$dir"/*/ 2>/dev/null || true)
+    local subdir_count
+    subdir_count=$(echo "$subdirs" | grep -c . 2>/dev/null || echo 0)
+
+    if [[ $subdir_count -eq 1 ]]; then
+        ARTIFACT_IS_DIR=true
+        ARTIFACT_PATH="${subdirs%/}"
+        print_info "Using subdirectory as BBR artifact: $ARTIFACT_PATH"
+        return
+    fi
+
+    print_error "No tar files or BBR artifacts found in directory: $dir"
+    exit 1
+}
+
 validate_artifact() {
     print_step "Validating Backup Artifact"
 
@@ -97,6 +141,20 @@ validate_artifact() {
             exit 1
         fi
         print_success "S3 artifact accessible"
+        return
+    fi
+
+    # If a directory was given, resolve it to a tar or BBR artifact directory
+    if [[ -d "$ARTIFACT_PATH" ]]; then
+        resolve_directory_artifact "$ARTIFACT_PATH"
+    fi
+
+    if [[ "$ARTIFACT_IS_DIR" == true ]]; then
+        if [[ ! -d "$ARTIFACT_PATH" ]]; then
+            print_error "BBR artifact directory not found: $ARTIFACT_PATH"
+            exit 1
+        fi
+        print_success "Artifact directory: $ARTIFACT_PATH"
         return
     fi
 
@@ -173,51 +231,57 @@ get_director_host() {
 run_restore() {
     print_step "Running BBR Restore"
 
-    RESTORE_DIR=$(mktemp -d)
-    print_info "Extracting artifact to: $RESTORE_DIR"
+    local restore_artifact_path
 
-    if [[ -n "$ARTIFACT_URL" ]]; then
-        print_info "Streaming from S3 (tar is never written to disk)..."
-        aws s3 cp "$ARTIFACT_URL" - | tar -xvf - -C "$RESTORE_DIR"
+    if [[ "$ARTIFACT_IS_DIR" == true ]]; then
+        # Directory given directly -- use it as-is, no extraction needed
+        restore_artifact_path="$ARTIFACT_PATH"
+        print_info "Using artifact directory directly: $restore_artifact_path"
     else
-        tar -xvf "$ARTIFACT_PATH" -C "$RESTORE_DIR"
+        RESTORE_DIR=$(mktemp -d)
+        print_info "Extracting artifact to: $RESTORE_DIR"
 
-        if [[ "$DELETE_ARTIFACT" == true ]]; then
-            print_info "Deleting tar artifact to free disk space: $ARTIFACT_PATH"
-            rm -f "$ARTIFACT_PATH"
+        if [[ -n "$ARTIFACT_URL" ]]; then
+            print_info "Streaming from S3 (tar is never written to disk)..."
+            aws s3 cp "$ARTIFACT_URL" - | tar -xvf - -C "$RESTORE_DIR"
+        else
+            tar -xvf "$ARTIFACT_PATH" -C "$RESTORE_DIR"
+
+            if [[ "$DELETE_ARTIFACT" == true ]]; then
+                print_info "Deleting tar artifact to free disk space: $ARTIFACT_PATH"
+                rm -f "$ARTIFACT_PATH"
+            fi
         fi
+
+        # Find the single BBR artifact directory inside the extracted contents
+        local dirs
+        dirs=$(ls -d "$RESTORE_DIR"/*/ 2>/dev/null || true)
+        local dir_count
+        dir_count=$(echo "$dirs" | grep -c . 2>/dev/null || echo 0)
+
+        if [[ $dir_count -eq 0 ]]; then
+            print_error "No directories found in extracted artifact"
+            exit 1
+        elif [[ $dir_count -gt 1 ]]; then
+            print_error "Expected one directory in artifact, found $dir_count"
+            exit 1
+        fi
+
+        restore_artifact_path="${dirs%%/}"
     fi
 
     if [[ -n "${BOSH_ALL_PROXY:-}" ]]; then
         print_info "Using SSH proxy: $BOSH_ALL_PROXY"
     fi
 
-    print_info "Starting restore..."
-
-    pushd "$RESTORE_DIR" >/dev/null
-
-    local dirs
-    dirs=$(ls -d -- */ 2>/dev/null || true)
-    local dir_count
-    dir_count=$(echo "$dirs" | grep -c . || echo 0)
-
-    if [[ $dir_count -eq 0 ]]; then
-        print_error "No directories found in extracted artifact"
-        popd >/dev/null
-        exit 1
-    elif [[ $dir_count -gt 1 ]]; then
-        print_error "Expected one directory in artifact, found $dir_count"
-        popd >/dev/null
-        exit 1
-    fi
+    print_info "Starting restore from: $restore_artifact_path"
 
     bbr director \
         --host "$DIRECTOR_HOST" \
         --username "$BBR_SSH_USER" \
         --private-key-path "$BBR_SSH_KEY_PATH" \
         restore \
-        --artifact-path "${dirs%/}"
-    popd >/dev/null
+        --artifact-path "$restore_artifact_path"
 
     print_success "Restore completed"
 }
@@ -279,12 +343,12 @@ main() {
     done
 
     if [[ -z "${ARTIFACT_PATH:-}" && -z "$ARTIFACT_URL" ]]; then
-        print_error "Must provide either a local tar file or --artifact-url"
+        print_error "Must provide a local tar file, directory, or --artifact-url"
         usage
     fi
 
     if [[ -n "${ARTIFACT_PATH:-}" && -n "$ARTIFACT_URL" ]]; then
-        print_error "Cannot use both a local tar file and --artifact-url"
+        print_error "Cannot use both a local path and --artifact-url"
         usage
     fi
 
