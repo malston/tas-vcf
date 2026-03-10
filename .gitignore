@@ -36,3 +36,5 @@ foundations/*/state/*.yml
 
 # Backups
 backups/
+backup.log
+restore.log
